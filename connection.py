@@ -6,7 +6,7 @@
 #  By: cehenrot <cehenrot@student.42lyon.fr>     +#+  +:+       +#+         #
 #                                              +#+#+#+#+#+   +#+            #
 #  Created: 2026/04/27 17:37:58 by cehenrot        #+#    #+#               #
-#  Updated: 2026/04/28 14:17:30 by cehenrot        ###   ########.fr        #
+#  Updated: 2026/04/28 17:00:32 by cehenrot        ###   ########.fr        #
 #                                                                           #
 # ************************************************************************* #
 
@@ -15,7 +15,7 @@ import sys
 try:
     from zone import Zone
 except ImportError as e:
-    print(f"[ERROR] connection: {e}")
+    print(f"[ERROR] connection.py: {e}")
     sys.exit()
 
 

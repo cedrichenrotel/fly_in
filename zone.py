@@ -6,7 +6,7 @@
 #  By: cehenrot <cehenrot@student.42lyon.fr>     +#+  +:+       +#+         #
 #                                              +#+#+#+#+#+   +#+            #
 #  Created: 2026/04/27 17:33:51 by cehenrot        #+#    #+#               #
-#  Updated: 2026/04/28 09:57:48 by cehenrot        ###   ########.fr        #
+#  Updated: 2026/04/28 15:18:38 by cehenrot        ###   ########.fr        #
 #                                                                           #
 # ************************************************************************* #
 
@@ -20,10 +20,8 @@ class ZoneType(Enum):
     priority = 'priority'
 
 
-'''Represents a zone/hub in the drone network.'''
-
-
 class Zone():
+    '''Represents a zone/hub in the drone network.'''
 
     def __init__(self, name: str, x: int, y: int,
                  zone_type: ZoneType = ZoneType.normal,
