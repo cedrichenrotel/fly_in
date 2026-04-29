@@ -6,7 +6,7 @@
 #  By: cehenrot <cehenrot@student.42lyon.fr>     +#+  +:+       +#+         #
 #                                              +#+#+#+#+#+   +#+            #
 #  Created: 2026/04/27 17:35:18 by cehenrot        #+#    #+#               #
-#  Updated: 2026/04/28 17:30:11 by cehenrot        ###   ########.fr        #
+#  Updated: 2026/04/29 18:04:44 by cehenrot        ###   ########.fr        #
 #                                                                           #
 # ************************************************************************* #
 
@@ -29,6 +29,7 @@ class Graph():
         self.dict_adjacency = {}
         self.start_zone: Zone | None = None
         self.end_zone: Zone | None = None
+        self.nb_drone: int = 0
 
     def set_start_zone(self, zone: Zone) -> None:
         self.start_zone = zone

@@ -6,20 +6,34 @@
 #  By: cehenrot <cehenrot@student.42lyon.fr>     +#+  +:+       +#+         #
 #                                              +#+#+#+#+#+   +#+            #
 #  Created: 2026/04/27 15:02:34 by cehenrot        #+#    #+#               #
-#  Updated: 2026/04/29 14:45:12 by cehenrot        ###   ########.fr        #
+#  Updated: 2026/04/29 18:05:23 by cehenrot        ###   ########.fr        #
 #                                                                           #
 # ************************************************************************* #
 
 import sys
 
 try:
-    from drone import Drone
     from zone import Zone, ZoneType
     from graph import Graph
     from connection import Connection
 except ImportError as e:
     print(f"[ERROR] file_parser.py: {e}")
     sys.exit()
+
+
+def extraction_info(line: str) -> list:
+
+    """split a line in the file to extract the information more effectively"""
+    info = line.replace('[', '').replace(']', '').split()
+    if info[0] == 'connection:':
+        if len(info) < 2:
+            raise Exception(f"Exctraction_info-> nb info connection "
+                            f"ncorrect {info} number: {len(info)}")
+    else:
+        if len(info) < 4:
+            raise Exception(f"Exctraction_info-> nb info ligne "
+                            f"incorrect {info} number: {len(info)}")
+    return info
 
 
 def parse_zone(line: str) -> Zone:
@@ -32,15 +46,6 @@ def parse_zone(line: str) -> Zone:
     return zone
 
 
-def extraction_info(line: str) -> list:
-
-    """split a line in the file to extract the information more effectively"""
-    info = line.replace('[', '').replace(']', '').split()
-    if len(info) < 4:
-        raise Exception("Exctraction_info-> nb info ligne incorrect")
-    return info
-
-
 def check_name_zone(name_zone: str) -> str:
 
     """checks that there are no '-', then stores the field name in a
@@ -51,7 +56,7 @@ def check_name_zone(name_zone: str) -> str:
     return name
 
 
-def check_coordinate(coordinate: int) -> int:
+def check_coordinate(coordinate: str) -> int:
 
     """checks that the value is indeed an integer and stores it in a
         variable"""
@@ -97,9 +102,10 @@ def parse_file(file: str) -> Graph:
                 try:
                     nb_drone = int(value)
                     if nb_drone <= 0:
-                        raise Exception("File_parser-> nb_drones: value <= 0")
+                        raise Exception("Parser-file-> nb_drones: value <= 0")
                 except ValueError:
-                    raise Exception("File_parser-> nb_drones: value unknown")
+                    raise Exception("Parser-file-> nb_drones: value unknown")
+                graph.nb_drone = nb_drone
 
             elif line.startswith('start_hub:'):
                 zone = parse_zone(line)
@@ -107,25 +113,41 @@ def parse_file(file: str) -> Graph:
                 graph.set_start_zone(zone)
 
             elif line.startswith('end_hub:'):
-                info = extraction_info(line)
-                name_zone = check_name_zone(info[1])
-                x = check_coordinate(info[2])
-                y = check_coordinate(info[3])
-                meta = extract_metadata(info[4:])
-                zone = Zone(name_zone, x, y, **meta)
+                zone = parse_zone(line)
                 graph.add_zone(zone)
                 graph.set_end_zone(zone)
 
             elif line.startswith('hub:'):
-                info = extraction_info(line)
-                name_zone = check_name_zone(info[1])
-                x = check_coordinate(info[2])
-                y = check_coordinate(info[3])
-                meta = extract_metadata(info[4:])
-                zone = Zone(name_zone, x, y, **meta)
+                zone = parse_zone(line)
                 graph.add_zone(zone)
 
             elif line.startswith('connection:'):
-                pass
-            
+                info = extraction_info(line)
+                zone_a, zone_b = info[1].split('-')
+                if (zone_a not in graph.dict_zones or
+                   zone_b not in graph.dict_zones):
+                    raise Exception("Parser-file-> connection coordinate "
+                                    "unknown")
+                obj_zone_a = graph.dict_zones[zone_a]
+                obj_zone_b = graph.dict_zones[zone_b]
+                max_link_capacity = 1
+                if len(info) > 2:
+                    try:
+                        key, value = info[2].split("=")
+                        if key == 'max_link_capacity':
+                            max_link_capacity = int(value)
+                    except ValueError as e:
+                        raise Exception(f"Max_link_capacity is not value, "
+                                        f"value: {e}")
+                connection = Connection(obj_zone_a, obj_zone_b,
+                                        max_link_capacity)
+                graph.add_adjacency(connection)
+
+        if graph.start_zone is None:
+            raise Exception("Parser-file-> no start_hub found")
+        if graph.end_zone is None:
+            raise Exception("Parser-file-> no end_hub found")
+        if graph.nb_drone == 0:
+            raise Exception("Parser-file-> no nb_drones found")
+
     return graph
