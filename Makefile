@@ -3,6 +3,7 @@ VENV := .venv
 PIP := $(VENV)/bin/pip
 PY := $(VENV)/bin/python
 FILE := main.py
+MAP := map.txt
 
 .PHONY: install run debug clean lint lint-strict
 
