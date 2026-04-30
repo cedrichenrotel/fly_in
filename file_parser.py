@@ -3,10 +3,10 @@
 #                                                      :::      ::::::::    #
 #  file_parser.py                                    :+:      :+:    :+:    #
 #                                                  +:+ +:+         +:+      #
-#  By: cehenrot <cehenrot@student.42lyon.fr>     +#+  +:+       +#+         #
+#  By: cehenrot <cehenrot@student.42.fr>         +#+  +:+       +#+         #
 #                                              +#+#+#+#+#+   +#+            #
 #  Created: 2026/04/27 15:02:34 by cehenrot        #+#    #+#               #
-#  Updated: 2026/04/29 18:05:23 by cehenrot        ###   ########.fr        #
+#  Updated: 2026/04/30 14:10:29 by cehenrot        ###   ########.fr        #
 #                                                                           #
 # ************************************************************************* #
 
@@ -88,6 +88,7 @@ def extract_metadata(lst_meta: list[str]) -> dict:
 
 def parse_file(file: str) -> Graph:
     graph = Graph()
+    set_zones = set()
 
     """Parse a map file and build a Graph object."""
     with open(file) as f:
@@ -95,7 +96,8 @@ def parse_file(file: str) -> Graph:
             raise Exception(f"[WARNING]: Empty file: {file}")
         for line in f:
             line = line.strip()
-            if not line or line.startswith('#'):
+            line = line.split('#')[0]
+            if not line:
                 continue
             if line.startswith('nb_drones:'):
                 _, value = line.split(':')
@@ -128,14 +130,22 @@ def parse_file(file: str) -> Graph:
                    zone_b not in graph.dict_zones):
                     raise Exception("Parser-file-> connection coordinate "
                                     "unknown")
+
+                if frozenset((zone_a, zone_b)) in set_zones:
+                    raise Exception("Parser-file-> The same connection appears more than once")
+                set_zones.add(frozenset((zone_a, zone_b)))
+                
                 obj_zone_a = graph.dict_zones[zone_a]
                 obj_zone_b = graph.dict_zones[zone_b]
+
                 max_link_capacity = 1
                 if len(info) > 2:
                     try:
                         key, value = info[2].split("=")
                         if key == 'max_link_capacity':
                             max_link_capacity = int(value)
+                            if max_link_capacity <= 0:
+                                raise Exception(f"max_link_capacity <= 0, value: {max_link_capacity}")
                     except ValueError as e:
                         raise Exception(f"Max_link_capacity is not value, "
                                         f"value: {e}")
@@ -149,5 +159,4 @@ def parse_file(file: str) -> Graph:
             raise Exception("Parser-file-> no end_hub found")
         if graph.nb_drone == 0:
             raise Exception("Parser-file-> no nb_drones found")
-
     return graph

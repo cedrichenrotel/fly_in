@@ -3,10 +3,10 @@
 #                                                      :::      ::::::::    #
 #  graph.py                                          :+:      :+:    :+:    #
 #                                                  +:+ +:+         +:+      #
-#  By: cehenrot <cehenrot@student.42lyon.fr>     +#+  +:+       +#+         #
+#  By: cehenrot <cehenrot@student.42.fr>         +#+  +:+       +#+         #
 #                                              +#+#+#+#+#+   +#+            #
 #  Created: 2026/04/27 17:35:18 by cehenrot        #+#    #+#               #
-#  Updated: 2026/04/29 18:04:44 by cehenrot        ###   ########.fr        #
+#  Updated: 2026/04/30 14:09:07 by cehenrot        ###   ########.fr        #
 #                                                                           #
 # ************************************************************************* #
 
@@ -47,7 +47,10 @@ class Graph():
 
     """Add a new field to 'dict_zone' using the name """
     def add_zone(self, zone: Zone) -> None:
-        self.dict_zones[zone.name] = zone
+        if zone.name not in self.dict_zones:
+            self.dict_zones[zone.name] = zone
+        else:
+            raise Exception("add_zone -> Two zones have been defined with the same name")
 
     """Add a connection to both zones in dict_adjacency.
         Connections are bidirectional"""
