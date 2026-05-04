@@ -3,10 +3,10 @@
 #                                                      :::      ::::::::    #
 #  zone.py                                           :+:      :+:    :+:    #
 #                                                  +:+ +:+         +:+      #
-#  By: cehenrot <cehenrot@student.42.fr>         +#+  +:+       +#+         #
+#  By: cehenrot <cehenrot@student.42lyon.fr>     +#+  +:+       +#+         #
 #                                              +#+#+#+#+#+   +#+            #
 #  Created: 2026/04/27 17:33:51 by cehenrot        #+#    #+#               #
-#  Updated: 2026/04/30 15:18:57 by cehenrot        ###   ########.fr        #
+#  Updated: 2026/05/04 08:16:55 by cehenrot        ###   ########.fr        #
 #                                                                           #
 # ************************************************************************* #
 
@@ -21,6 +21,7 @@ class ZoneType(Enum):
 
     def cost(self):
         return self.value[1]
+
 
 class Zone():
     '''Represents a zone/hub in the drone network.'''
