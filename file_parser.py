@@ -3,10 +3,10 @@
 #                                                      :::      ::::::::    #
 #  file_parser.py                                    :+:      :+:    :+:    #
 #                                                  +:+ +:+         +:+      #
-#  By: cehenrot <cehenrot@student.42.fr>         +#+  +:+       +#+         #
+#  By: cehenrot <cehenrot@student.42lyon.fr>     +#+  +:+       +#+         #
 #                                              +#+#+#+#+#+   +#+            #
 #  Created: 2026/04/27 15:02:34 by cehenrot        #+#    #+#               #
-#  Updated: 2026/04/30 14:10:29 by cehenrot        ###   ########.fr        #
+#  Updated: 2026/05/04 18:15:23 by cehenrot        ###   ########.fr        #
 #                                                                           #
 # ************************************************************************* #
 
@@ -132,9 +132,10 @@ def parse_file(file: str) -> Graph:
                                     "unknown")
 
                 if frozenset((zone_a, zone_b)) in set_zones:
-                    raise Exception("Parser-file-> The same connection appears more than once")
+                    raise Exception("Parser-file-> The same connection appears"
+                                    " more than once")
                 set_zones.add(frozenset((zone_a, zone_b)))
-                
+
                 obj_zone_a = graph.dict_zones[zone_a]
                 obj_zone_b = graph.dict_zones[zone_b]
 
@@ -145,7 +146,8 @@ def parse_file(file: str) -> Graph:
                         if key == 'max_link_capacity':
                             max_link_capacity = int(value)
                             if max_link_capacity <= 0:
-                                raise Exception(f"max_link_capacity <= 0, value: {max_link_capacity}")
+                                raise Exception(f"max_link_capacity <= 0, "
+                                                f"value: {max_link_capacity}")
                     except ValueError as e:
                         raise Exception(f"Max_link_capacity is not value, "
                                         f"value: {e}")

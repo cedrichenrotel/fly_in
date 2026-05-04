@@ -15,7 +15,7 @@ $(VENV)/bin/activate:
 venv: $(VENV)/bin/activate
 
 install: venv
-	$(PIP) install -r fly_in/requirements.txt
+	$(PIP) install -r requierements.txt
 
 run: venv
 	@$(PY) $(FILE) $(MAP)
