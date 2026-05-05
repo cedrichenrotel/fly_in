@@ -3,16 +3,17 @@
 #                                                      :::      ::::::::    #
 #  simulator.py                                      :+:      :+:    :+:    #
 #                                                  +:+ +:+         +:+      #
-#  By: cehenrot <cehenrot@student.42.fr>         +#+  +:+       +#+         #
+#  By: cehenrot <cehenrot@student.42lyon.fr>     +#+  +:+       +#+         #
 #                                              +#+#+#+#+#+   +#+            #
 #  Created: 2026/04/27 17:35:52 by cehenrot        #+#    #+#               #
-#  Updated: 2026/05/05 14:53:02 by cehenrot        ###   ########.fr        #
+#  Updated: 2026/05/05 18:35:53 by cehenrot        ###   ########.fr        #
 #                                                                           #
 # ************************************************************************* #
 
 import sys
 
 try:
+    from zone import ZoneType
     from drone import Drone
     from graph import Graph
     from algo_dijkstra import AlgoDijkstra
@@ -27,6 +28,7 @@ class Simulator():
         self.graph = graph
         self.drones_id = {}
         self.paths = {}
+        self.trajectorie = {}
         self.nb_turn = 0
 
     def init_drone(self) -> None:
@@ -50,19 +52,26 @@ class Simulator():
         """run_drones — loops through each turn and moves each drone"""
 
         while not all(drone.is_arrived for drone in self.drones_id.values()):
+
             for drone in self.drones_id:
                 current_path = self.paths[drone]
                 current_drone = self.drones_id[drone]
 
                 if current_drone.is_arrived:
                     continue
+
                 current_index = current_path.index(current_drone.
                                                    current_zone.name)
+
                 next_path = current_path[current_index + 1]
                 next_zone = self.graph.dict_zones[next_path]
 
-                if next_zone.current_drones < next_zone.max_drones:
+                if (next_zone.current_drones < next_zone.max_drones and
+                   next_zone.zone_type != ZoneType.blocked):
                     current_drone.current_zone.current_drones -= 1
                     current_drone.drone_move(next_zone, self.graph.end_zone)
                     next_zone.current_drones += 1
+
+                    self.trajectorie[drone].append(current_drone.current_zone.name)
+
             self.nb_turn += 1

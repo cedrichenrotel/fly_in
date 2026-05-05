@@ -3,16 +3,22 @@
 #                                                      :::      ::::::::    #
 #  main.py                                           :+:      :+:    :+:    #
 #                                                  +:+ +:+         +:+      #
-#  By: cehenrot <cehenrot@student.42.fr>         +#+  +:+       +#+         #
+#  By: cehenrot <cehenrot@student.42lyon.fr>     +#+  +:+       +#+         #
 #                                              +#+#+#+#+#+   +#+            #
 #  Created: 2026/04/27 15:03:24 by cehenrot        #+#    #+#               #
-#  Updated: 2026/05/05 08:11:47 by cehenrot        ###   ########.fr        #
+#  Updated: 2026/05/05 18:30:54 by cehenrot        ###   ########.fr        #
 #                                                                           #
 # ************************************************************************* #
 
 import sys
-from file_parser import parse_file
-from simulator import Simulator
+
+try:
+    from file_parser import parse_file
+    from simulator import Simulator
+
+except ImportError as e:
+    print(f"[ERROR] main.py: {e}")
+    sys.exit()
 
 
 def main() -> None:
@@ -22,8 +28,20 @@ def main() -> None:
             raise Exception("[WARNING]: Incorrect number of arguments")
         file = sys.argv[1]
         graph = parse_file(file)
+
+        simulator = Simulator(graph)
+        simulator.init_drone()
+        simulator.init_run()
+        # simulator.run_drones()
+
+        print("___SIMULATION RESULTS___")
+        print(f"\nNumber of turn: {simulator.nb_turn}")
+
+        for drone_id, trajectory in simulator.trajectorie.items():
+            print(f"Drone {drone_id} trajectory: {' -> '.join(trajectory)}")
+
     except Exception as e:
-        print(f"[ERROR]: {e}")
+        print(f"[ERROR]: main.py -> {e}")
 
 
 if __name__ == "__main__":
