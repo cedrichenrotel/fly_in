@@ -3,15 +3,16 @@
 #                                                      :::      ::::::::    #
 #  main.py                                           :+:      :+:    :+:    #
 #                                                  +:+ +:+         +:+      #
-#  By: cehenrot <cehenrot@student.42lyon.fr>     +#+  +:+       +#+         #
+#  By: cehenrot <cehenrot@student.42.fr>         +#+  +:+       +#+         #
 #                                              +#+#+#+#+#+   +#+            #
 #  Created: 2026/04/27 15:03:24 by cehenrot        #+#    #+#               #
-#  Updated: 2026/04/27 17:18:16 by cehenrot        ###   ########.fr        #
+#  Updated: 2026/05/05 08:11:47 by cehenrot        ###   ########.fr        #
 #                                                                           #
 # ************************************************************************* #
 
 import sys
 from file_parser import parse_file
+from simulator import Simulator
 
 
 def main() -> None:

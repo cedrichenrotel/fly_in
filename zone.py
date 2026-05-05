@@ -3,10 +3,10 @@
 #                                                      :::      ::::::::    #
 #  zone.py                                           :+:      :+:    :+:    #
 #                                                  +:+ +:+         +:+      #
-#  By: cehenrot <cehenrot@student.42lyon.fr>     +#+  +:+       +#+         #
+#  By: cehenrot <cehenrot@student.42.fr>         +#+  +:+       +#+         #
 #                                              +#+#+#+#+#+   +#+            #
 #  Created: 2026/04/27 17:33:51 by cehenrot        #+#    #+#               #
-#  Updated: 2026/05/04 08:16:55 by cehenrot        ###   ########.fr        #
+#  Updated: 2026/05/05 14:07:33 by cehenrot        ###   ########.fr        #
 #                                                                           #
 # ************************************************************************* #
 
@@ -38,3 +38,4 @@ class Zone():
         self.zone_type = zone_type
         self.color = color
         self.max_drones = max_drones
+        self.current_drones = 0

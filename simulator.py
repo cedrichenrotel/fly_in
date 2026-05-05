@@ -3,10 +3,10 @@
 #                                                      :::      ::::::::    #
 #  simulator.py                                      :+:      :+:    :+:    #
 #                                                  +:+ +:+         +:+      #
-#  By: cehenrot <cehenrot@student.42lyon.fr>     +#+  +:+       +#+         #
+#  By: cehenrot <cehenrot@student.42.fr>         +#+  +:+       +#+         #
 #                                              +#+#+#+#+#+   +#+            #
 #  Created: 2026/04/27 17:35:52 by cehenrot        #+#    #+#               #
-#  Updated: 2026/05/04 18:33:55 by cehenrot        ###   ########.fr        #
+#  Updated: 2026/05/05 13:58:13 by cehenrot        ###   ########.fr        #
 #                                                                           #
 # ************************************************************************* #
 
@@ -25,12 +25,34 @@ class Simulator():
 
     def __init__(self, graph: Graph) -> None:
         self.graph = graph
-        self.drones = {}
-        self.path = {}
+        self.drones_id = {}
+        self.paths = {}
         self.nb_turn = 0
 
     def init_drone(self) -> None:
+        """init_drone: creates all drones in the start_zone"""
+
         nb_drone = self.graph.nb_drone
 
         for n in range(1, nb_drone + 1):
-            self.drones[f"D{n}"] = self.graph.start_zone
+            self.drones_id[f"D{n}"] = Drone(f"D{n}", self.graph.start_zone)
+
+    def init_run(self) -> None:
+        """assigning a single path to all drones"""
+
+        algo = AlgoDijkstra(self.graph)
+        algo.run()
+        path = algo.reconstruct_path()
+        for drone in self.drones_id:
+            self.paths[drone] = path.copy()
+    
+    def run_drones(self) -> None:
+        """run_drones — loops through each turn and moves each drone"""
+
+        while not all(drone.is_arrived for drone in self.drones_id):
+            for drone in self.drones_id:
+                current_path = self.paths[drone]
+                current_index = current_path.index(self.drones_id[drone].current_zone.name)
+                next_path = current_path[current_index + 1]
+                self.drones_id[drone].drone_move(self.graph.dict_zones[next_path], self.graph.end_zone)
+            self.nb_turn += 1
