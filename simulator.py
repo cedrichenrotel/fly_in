@@ -6,7 +6,7 @@
 #  By: cehenrot <cehenrot@student.42.fr>         +#+  +:+       +#+         #
 #                                              +#+#+#+#+#+   +#+            #
 #  Created: 2026/04/27 17:35:52 by cehenrot        #+#    #+#               #
-#  Updated: 2026/05/05 13:58:13 by cehenrot        ###   ########.fr        #
+#  Updated: 2026/05/05 14:53:02 by cehenrot        ###   ########.fr        #
 #                                                                           #
 # ************************************************************************* #
 
@@ -45,14 +45,24 @@ class Simulator():
         path = algo.reconstruct_path()
         for drone in self.drones_id:
             self.paths[drone] = path.copy()
-    
+
     def run_drones(self) -> None:
         """run_drones — loops through each turn and moves each drone"""
 
-        while not all(drone.is_arrived for drone in self.drones_id):
+        while not all(drone.is_arrived for drone in self.drones_id.values()):
             for drone in self.drones_id:
                 current_path = self.paths[drone]
-                current_index = current_path.index(self.drones_id[drone].current_zone.name)
+                current_drone = self.drones_id[drone]
+
+                if current_drone.is_arrived:
+                    continue
+                current_index = current_path.index(current_drone.
+                                                   current_zone.name)
                 next_path = current_path[current_index + 1]
-                self.drones_id[drone].drone_move(self.graph.dict_zones[next_path], self.graph.end_zone)
+                next_zone = self.graph.dict_zones[next_path]
+
+                if next_zone.current_drones < next_zone.max_drones:
+                    current_drone.current_zone.current_drones -= 1
+                    current_drone.drone_move(next_zone, self.graph.end_zone)
+                    next_zone.current_drones += 1
             self.nb_turn += 1
