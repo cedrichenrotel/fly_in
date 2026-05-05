@@ -6,7 +6,7 @@
 #  By: cehenrot <cehenrot@student.42lyon.fr>     +#+  +:+       +#+         #
 #                                              +#+#+#+#+#+   +#+            #
 #  Created: 2026/04/27 15:02:34 by cehenrot        #+#    #+#               #
-#  Updated: 2026/05/04 18:15:23 by cehenrot        ###   ########.fr        #
+#  Updated: 2026/05/05 18:52:15 by cehenrot        ###   ########.fr        #
 #                                                                           #
 # ************************************************************************* #
 
@@ -78,7 +78,7 @@ def extract_metadata(lst_meta: list[str]) -> dict:
             if key == 'color':
                 dict_meta['color'] = val
             if key == 'zone':
-                dict_meta['zone_type'] = ZoneType(val)
+                dict_meta['zone_type'] = ZoneType[val]
             if key == 'max_drones':
                 dict_meta['max_drones'] = int(val)
         return dict_meta
@@ -153,6 +153,7 @@ def parse_file(file: str) -> Graph:
                                         f"value: {e}")
                 connection = Connection(obj_zone_a, obj_zone_b,
                                         max_link_capacity)
+
                 graph.add_adjacency(connection)
 
         if graph.start_zone is None:

@@ -6,7 +6,7 @@
 #  By: cehenrot <cehenrot@student.42lyon.fr>     +#+  +:+       +#+         #
 #                                              +#+#+#+#+#+   +#+            #
 #  Created: 2026/04/27 15:03:24 by cehenrot        #+#    #+#               #
-#  Updated: 2026/05/05 18:30:54 by cehenrot        ###   ########.fr        #
+#  Updated: 2026/05/05 18:46:44 by cehenrot        ###   ########.fr        #
 #                                                                           #
 # ************************************************************************* #
 
@@ -15,7 +15,6 @@ import sys
 try:
     from file_parser import parse_file
     from simulator import Simulator
-
 except ImportError as e:
     print(f"[ERROR] main.py: {e}")
     sys.exit()
