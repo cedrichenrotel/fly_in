@@ -3,10 +3,10 @@
 #                                                      :::      ::::::::    #
 #  algo_dijkstra.py                                  :+:      :+:    :+:    #
 #                                                  +:+ +:+         +:+      #
-#  By: cehenrot <cehenrot@student.42.fr>         +#+  +:+       +#+         #
+#  By: cehenrot <cehenrot@student.42lyon.fr>     +#+  +:+       +#+         #
 #                                              +#+#+#+#+#+   +#+            #
 #  Created: 2026/04/30 14:27:33 by cehenrot        #+#    #+#               #
-#  Updated: 2026/05/06 14:47:06 by cehenrot        ###   ########.fr        #
+#  Updated: 2026/05/06 18:03:18 by cehenrot        ###   ########.fr        #
 #                                                                           #
 # ************************************************************************* #
 
@@ -56,15 +56,11 @@ class AlgoDijkstra():
             if current_cost > self.distances[zone]:
                 continue
 
-            for neighbor_info in self.graph.get_neighbors(zone):
-
-                neighbor_name, _ = neighbor_info
-
-                """Find the neighbour (on the other end of the connection)"""
-                new_neighbor = self.graph.dict_zones.get(neighbor_name)
-
-                if new_neighbor is None:
-                    continue
+            for neighbor in self.graph.get_neighbors(zone):
+                if zone == neighbor.zone_a.name:
+                    new_neighbor = neighbor.zone_b
+                else:
+                    new_neighbor = neighbor.zone_a
 
                 new_cost = current_cost + new_neighbor.zone_type.cost()
 

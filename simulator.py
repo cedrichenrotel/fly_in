@@ -6,7 +6,7 @@
 #  By: cehenrot <cehenrot@student.42lyon.fr>     +#+  +:+       +#+         #
 #                                              +#+#+#+#+#+   +#+            #
 #  Created: 2026/04/27 17:35:52 by cehenrot        #+#    #+#               #
-#  Updated: 2026/05/06 17:36:51 by cehenrot        ###   ########.fr        #
+#  Updated: 2026/05/06 18:06:20 by cehenrot        ###   ########.fr        #
 #                                                                           #
 # ************************************************************************* #
 
@@ -48,9 +48,9 @@ class Simulator():
                              "initialise the drones")
 
         for n in range(1, nb_drone + 1):
+            self.trajectory[f'D{n}'] = []
             self.drones_id[f"D{n}"] = Drone(f"D{n}", start_zone)
-
-        start_zone.current_drones += 1
+            start_zone.current_drones += 1
 
     def init_run(self) -> None:
         """assigning a single path to all drones"""

@@ -3,10 +3,10 @@
 #                                                      :::      ::::::::    #
 #  file_parser.py                                    :+:      :+:    :+:    #
 #                                                  +:+ +:+         +:+      #
-#  By: cehenrot <cehenrot@student.42.fr>         +#+  +:+       +#+         #
+#  By: cehenrot <cehenrot@student.42lyon.fr>     +#+  +:+       +#+         #
 #                                              +#+#+#+#+#+   +#+            #
 #  Created: 2026/04/27 15:02:34 by cehenrot        #+#    #+#               #
-#  Updated: 2026/05/06 13:41:32 by cehenrot        ###   ########.fr        #
+#  Updated: 2026/05/06 18:02:52 by cehenrot        ###   ########.fr        #
 #                                                                           #
 # ************************************************************************* #
 
