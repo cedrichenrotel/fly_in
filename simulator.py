@@ -3,10 +3,10 @@
 #                                                      :::      ::::::::    #
 #  simulator.py                                      :+:      :+:    :+:    #
 #                                                  +:+ +:+         +:+      #
-#  By: cehenrot <cehenrot@student.42.fr>         +#+  +:+       +#+         #
+#  By: cehenrot <cehenrot@student.42lyon.fr>     +#+  +:+       +#+         #
 #                                              +#+#+#+#+#+   +#+            #
 #  Created: 2026/04/27 17:35:52 by cehenrot        #+#    #+#               #
-#  Updated: 2026/05/06 14:54:45 by cehenrot        ###   ########.fr        #
+#  Updated: 2026/05/06 17:36:51 by cehenrot        ###   ########.fr        #
 #                                                                           #
 # ************************************************************************* #
 
@@ -26,7 +26,7 @@ class Simulator():
 
     def __init__(self, graph: Graph) -> None:
         self.graph = graph
-        self.stock_turns: list[dict] = []
+        self.stock_turns: list[list[str]] = []
         self.drones_id: dict = {}
         self.paths: dict = {}
         self.trajectory: dict = {}
@@ -41,10 +41,16 @@ class Simulator():
             raise ValueError("The starting point of the graph has not been "
                              "set.")
 
+        start_zone = self.graph.start_zone
+
+        if start_zone is None:
+            raise ValueError("Simulator -> start_zone is None; unable to "
+                             "initialise the drones")
+
         for n in range(1, nb_drone + 1):
-            self.trajectory[f'D{n}'] = []
-            self.drones_id[f"D{n}"] = Drone(f"D{n}", self.graph.start_zone)
-            self.graph.start_zone.current_drones += 1
+            self.drones_id[f"D{n}"] = Drone(f"D{n}", start_zone)
+
+        start_zone.current_drones += 1
 
     def init_run(self) -> None:
         """assigning a single path to all drones"""
@@ -60,7 +66,7 @@ class Simulator():
 
         while not all(drone.is_arrived for drone in self.drones_id.values()):
 
-            moves = []
+            moves: list[tuple] = []
 
             for drone in self.drones_id:
 
