@@ -3,17 +3,16 @@
 #                                                      :::      ::::::::    #
 #  algo_dijkstra.py                                  :+:      :+:    :+:    #
 #                                                  +:+ +:+         +:+      #
-#  By: cehenrot <cehenrot@student.42lyon.fr>     +#+  +:+       +#+         #
+#  By: cehenrot <cehenrot@student.42.fr>         +#+  +:+       +#+         #
 #                                              +#+#+#+#+#+   +#+            #
 #  Created: 2026/04/30 14:27:33 by cehenrot        #+#    #+#               #
-#  Updated: 2026/05/04 15:07:03 by cehenrot        ###   ########.fr        #
+#  Updated: 2026/05/06 14:47:06 by cehenrot        ###   ########.fr        #
 #                                                                           #
 # ************************************************************************* #
 
 import sys
 
 try:
-    from zone import Zone
     from graph import Graph
     import heapq
 except ImportError as e:
@@ -40,23 +39,34 @@ class AlgoDijkstra():
     def initialize(self) -> None:
         self.distances = {vertex: sys.maxsize for vertex in
                           self.graph.dict_zones}
+
+        if self.start is None:
+            raise Exception("algo_dijkstra -> The starting point has not been"
+                            " defined.")
+
         self.distances[self.start.name] = 0
         self.predecessors = {vertex: None for vertex in self.graph.dict_zones}
-        self.heap = []
+        self.heap: list = []
         heapq.heappush(self.heap, (0, self.start.name))
 
     def run(self) -> None:
         while self.heap:
-            cost, zone = heapq.heappop(self.heap)
-            if cost > self.distances[zone]:
+            current_cost, zone = heapq.heappop(self.heap)
+
+            if current_cost > self.distances[zone]:
                 continue
-            for neighbor in self.graph.get_neighbors(zone):
+
+            for neighbor_info in self.graph.get_neighbors(zone):
+
+                neighbor_name, _ = neighbor_info
 
                 """Find the neighbour (on the other end of the connection)"""
-                new_neighbor: Zone = neighbor.zone_a
-                if zone == neighbor.zone_a.name:
-                    new_neighbor: Zone = neighbor.zone_b
-                new_cost = cost + new_neighbor.zone_type.cost()
+                new_neighbor = self.graph.dict_zones.get(neighbor_name)
+
+                if new_neighbor is None:
+                    continue
+
+                new_cost = current_cost + new_neighbor.zone_type.cost()
 
                 """course update"""
                 if new_cost < self.distances[new_neighbor.name]:
@@ -64,15 +74,25 @@ class AlgoDijkstra():
                     self.predecessors[new_neighbor.name] = zone
                     heapq.heappush(self.heap, (new_cost, new_neighbor.name))
 
-    def reconstruct_path(self) -> list:
+    def reconstruct_path(self) -> list[str]:
 
         """route from the arrival area to the departure area to find the
             shortest route"""
-        path = []
+
+        current: str | None = None
+
+        if self.graph.end_zone is None:
+            raise Exception("The destination zone (end_zone) is not defined in"
+                            " the graph.")
+
         current = self.graph.end_zone.name
+
+        path: list[str] = []
 
         while current is not None:
             path.append(current)
-            current = self.predecessors[current]
+            current = self.predecessors.get(current)
+
         path.reverse()
+
         return path

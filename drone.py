@@ -3,10 +3,10 @@
 #                                                      :::      ::::::::    #
 #  drone.py                                          :+:      :+:    :+:    #
 #                                                  +:+ +:+         +:+      #
-#  By: cehenrot <cehenrot@student.42lyon.fr>     +#+  +:+       +#+         #
+#  By: cehenrot <cehenrot@student.42.fr>         +#+  +:+       +#+         #
 #                                              +#+#+#+#+#+   +#+            #
 #  Created: 2026/04/27 17:31:49 by cehenrot        #+#    #+#               #
-#  Updated: 2026/04/28 17:00:20 by cehenrot        ###   ########.fr        #
+#  Updated: 2026/05/06 09:28:47 by cehenrot        ###   ########.fr        #
 #                                                                           #
 # ************************************************************************* #
 

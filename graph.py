@@ -3,10 +3,10 @@
 #                                                      :::      ::::::::    #
 #  graph.py                                          :+:      :+:    :+:    #
 #                                                  +:+ +:+         +:+      #
-#  By: cehenrot <cehenrot@student.42lyon.fr>     +#+  +:+       +#+         #
+#  By: cehenrot <cehenrot@student.42.fr>         +#+  +:+       +#+         #
 #                                              +#+#+#+#+#+   +#+            #
 #  Created: 2026/04/27 17:35:18 by cehenrot        #+#    #+#               #
-#  Updated: 2026/05/04 10:16:29 by cehenrot        ###   ########.fr        #
+#  Updated: 2026/05/06 13:25:07 by cehenrot        ###   ########.fr        #
 #                                                                           #
 # ************************************************************************* #
 
@@ -25,8 +25,8 @@ class Graph():
 
     def __init__(self) -> None:
 
-        self.dict_zones = {}
-        self.dict_adjacency = {}
+        self.dict_zones: dict = {}
+        self.dict_adjacency: dict = {}
         self.start_zone: Zone | None = None
         self.end_zone: Zone | None = None
         self.nb_drone: int = 0
@@ -41,8 +41,8 @@ class Graph():
     def get_neighbors(self, zone: Zone) -> list:
         lst_neighbors = []
 
-        if zone.name in self.dict_adjacency:
-            lst_neighbors = self.dict_adjacency[zone.name]
+        if zone in self.dict_adjacency:
+            lst_neighbors = self.dict_adjacency[zone]
         return lst_neighbors
 
     """Add a new field to 'dict_zone' using the name """

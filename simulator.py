@@ -3,10 +3,10 @@
 #                                                      :::      ::::::::    #
 #  simulator.py                                      :+:      :+:    :+:    #
 #                                                  +:+ +:+         +:+      #
-#  By: cehenrot <cehenrot@student.42lyon.fr>     +#+  +:+       +#+         #
+#  By: cehenrot <cehenrot@student.42.fr>         +#+  +:+       +#+         #
 #                                              +#+#+#+#+#+   +#+            #
 #  Created: 2026/04/27 17:35:52 by cehenrot        #+#    #+#               #
-#  Updated: 2026/05/05 18:35:53 by cehenrot        ###   ########.fr        #
+#  Updated: 2026/05/06 14:54:45 by cehenrot        ###   ########.fr        #
 #                                                                           #
 # ************************************************************************* #
 
@@ -26,18 +26,25 @@ class Simulator():
 
     def __init__(self, graph: Graph) -> None:
         self.graph = graph
-        self.drones_id = {}
-        self.paths = {}
-        self.trajectorie = {}
-        self.nb_turn = 0
+        self.stock_turns: list[dict] = []
+        self.drones_id: dict = {}
+        self.paths: dict = {}
+        self.trajectory: dict = {}
+        self.nb_turn: int = 0
 
     def init_drone(self) -> None:
         """init_drone: creates all drones in the start_zone"""
 
         nb_drone = self.graph.nb_drone
 
+        if nb_drone is None:
+            raise ValueError("The starting point of the graph has not been "
+                             "set.")
+
         for n in range(1, nb_drone + 1):
+            self.trajectory[f'D{n}'] = []
             self.drones_id[f"D{n}"] = Drone(f"D{n}", self.graph.start_zone)
+            self.graph.start_zone.current_drones += 1
 
     def init_run(self) -> None:
         """assigning a single path to all drones"""
@@ -53,12 +60,18 @@ class Simulator():
 
         while not all(drone.is_arrived for drone in self.drones_id.values()):
 
+            moves = []
+
             for drone in self.drones_id:
-                current_path = self.paths[drone]
+
                 current_drone = self.drones_id[drone]
 
+                """Do not tamper with the drones once they have reached their
+                    destination"""
                 if current_drone.is_arrived:
                     continue
+
+                current_path = self.paths[drone]
 
                 current_index = current_path.index(current_drone.
                                                    current_zone.name)
@@ -66,12 +79,23 @@ class Simulator():
                 next_path = current_path[current_index + 1]
                 next_zone = self.graph.dict_zones[next_path]
 
-                if (next_zone.current_drones < next_zone.max_drones and
-                   next_zone.zone_type != ZoneType.blocked):
-                    current_drone.current_zone.current_drones -= 1
-                    current_drone.drone_move(next_zone, self.graph.end_zone)
-                    next_zone.current_drones += 1
+                """If the next zone is not blocked and no other drone has
+                    already reserved that zone for this turn, then the planned
+                    move (drone, current_zone, next_zone) is added to the list
+                    of moves for the turn."""
+                if (next_zone.zone_type != ZoneType.blocked and
+                   next_zone not in [m[2] for m in moves]):
+                    moves.append((drone, current_drone.current_zone,
+                                  next_zone))
 
-                    self.trajectorie[drone].append(current_drone.current_zone.name)
+            for (drone, old_zone, next_zone) in moves:
+                old_zone.current_drones -= 1
+                self.drones_id[drone].drone_move(next_zone,
+                                                 self.graph.end_zone)
+                next_zone.current_drones += 1
+                self.trajectory[drone].append(next_zone.name)
+            """record the drone's flight paths for each round"""
+            self.stock_turns.append([f"{drone}-{next_zone.name}"
+                                     for (drone, _, next_zone) in moves])
 
             self.nb_turn += 1

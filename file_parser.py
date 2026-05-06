@@ -3,10 +3,10 @@
 #                                                      :::      ::::::::    #
 #  file_parser.py                                    :+:      :+:    :+:    #
 #                                                  +:+ +:+         +:+      #
-#  By: cehenrot <cehenrot@student.42lyon.fr>     +#+  +:+       +#+         #
+#  By: cehenrot <cehenrot@student.42.fr>         +#+  +:+       +#+         #
 #                                              +#+#+#+#+#+   +#+            #
 #  Created: 2026/04/27 15:02:34 by cehenrot        #+#    #+#               #
-#  Updated: 2026/05/05 18:52:15 by cehenrot        ###   ########.fr        #
+#  Updated: 2026/05/06 13:41:32 by cehenrot        ###   ########.fr        #
 #                                                                           #
 # ************************************************************************* #
 
@@ -78,9 +78,9 @@ def extract_metadata(lst_meta: list[str]) -> dict:
             if key == 'color':
                 dict_meta['color'] = val
             if key == 'zone':
-                dict_meta['zone_type'] = ZoneType[val]
+                dict_meta['zone_type'] = ZoneType[val].name
             if key == 'max_drones':
-                dict_meta['max_drones'] = int(val)
+                dict_meta['max_drones'] = str(int(val))
         return dict_meta
     except ValueError as e:
         raise Exception(f"Extract_metadata-> {e} invalid")

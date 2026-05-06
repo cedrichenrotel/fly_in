@@ -3,10 +3,10 @@
 #                                                      :::      ::::::::    #
 #  main.py                                           :+:      :+:    :+:    #
 #                                                  +:+ +:+         +:+      #
-#  By: cehenrot <cehenrot@student.42lyon.fr>     +#+  +:+       +#+         #
+#  By: cehenrot <cehenrot@student.42.fr>         +#+  +:+       +#+         #
 #                                              +#+#+#+#+#+   +#+            #
 #  Created: 2026/04/27 15:03:24 by cehenrot        #+#    #+#               #
-#  Updated: 2026/05/05 18:46:44 by cehenrot        ###   ########.fr        #
+#  Updated: 2026/05/06 13:15:02 by cehenrot        ###   ########.fr        #
 #                                                                           #
 # ************************************************************************* #
 
@@ -31,13 +31,14 @@ def main() -> None:
         simulator = Simulator(graph)
         simulator.init_drone()
         simulator.init_run()
-        # simulator.run_drones()
+        simulator.run_drones()
 
         print("___SIMULATION RESULTS___")
         print(f"\nNumber of turn: {simulator.nb_turn}")
+        print()
 
-        for drone_id, trajectory in simulator.trajectorie.items():
-            print(f"Drone {drone_id} trajectory: {' -> '.join(trajectory)}")
+        for turn in simulator.stock_turns:
+            print(turn)
 
     except Exception as e:
         print(f"[ERROR]: main.py -> {e}")
