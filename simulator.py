@@ -3,10 +3,10 @@
 #                                                      :::      ::::::::    #
 #  simulator.py                                      :+:      :+:    :+:    #
 #                                                  +:+ +:+         +:+      #
-#  By: cehenrot <cehenrot@student.42lyon.fr>     +#+  +:+       +#+         #
+#  By: cehenrot <cehenrot@student.42.fr>         +#+  +:+       +#+         #
 #                                              +#+#+#+#+#+   +#+            #
 #  Created: 2026/04/27 17:35:52 by cehenrot        #+#    #+#               #
-#  Updated: 2026/05/06 18:06:20 by cehenrot        ###   ########.fr        #
+#  Updated: 2026/05/07 13:09:29 by cehenrot        ###   ########.fr        #
 #                                                                           #
 # ************************************************************************* #
 
@@ -65,7 +65,6 @@ class Simulator():
         """run_drones — loops through each turn and moves each drone"""
 
         while not all(drone.is_arrived for drone in self.drones_id.values()):
-
             moves: list[tuple] = []
 
             for drone in self.drones_id:
@@ -85,14 +84,36 @@ class Simulator():
                 next_path = current_path[current_index + 1]
                 next_zone = self.graph.dict_zones[next_path]
 
-                """If the next zone is not blocked and no other drone has
-                    already reserved that zone for this turn, then the planned
-                    move (drone, current_zone, next_zone) is added to the list
-                    of moves for the turn."""
-                if (next_zone.zone_type != ZoneType.blocked and
-                   next_zone not in [m[2] for m in moves]):
-                    moves.append((drone, current_drone.current_zone,
-                                  next_zone))
+                """checks that the connection between old_zone and next_zone
+                  is not overloaded."""
+                connection = self.graph.get_neighbors(current_drone.
+                                                      current_zone)
+
+                for conn in connection:
+
+                    if conn.zone_a == next_zone or conn.zone_b == next_zone:
+
+                        """ The zone is not blocked
+                            The connection is not overloaded
+                            The destination zone is not full"""
+                        nb_drones_entry = len([m for m in moves if m[2] ==
+                                               next_zone])
+
+                        nb_drones_exit = len([m for m in moves if m[1] ==
+                                              next_zone])
+
+                        nb_current_drone = (next_zone.current_drones - nb_drones_exit +
+                                            nb_drones_entry)
+
+                        if (next_zone.zone_type != ZoneType.blocked and
+                            len([m for m in moves
+                                 if m[1] == current_drone.current_zone and
+                                 m[2] == next_zone]) < conn.max_link_capacity and
+                                 nb_current_drone < next_zone.max_drones):
+
+                            moves.append((drone, current_drone.current_zone,
+                                          next_zone))
+                            break
 
             for (drone, old_zone, next_zone) in moves:
                 old_zone.current_drones -= 1
@@ -100,7 +121,9 @@ class Simulator():
                                                  self.graph.end_zone)
                 next_zone.current_drones += 1
                 self.trajectory[drone].append(next_zone.name)
+
             """record the drone's flight paths for each round"""
+
             self.stock_turns.append([f"{drone}-{next_zone.name}"
                                      for (drone, _, next_zone) in moves])
 

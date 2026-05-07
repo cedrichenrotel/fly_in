@@ -6,7 +6,7 @@
 #  By: cehenrot <cehenrot@student.42.fr>         +#+  +:+       +#+         #
 #                                              +#+#+#+#+#+   +#+            #
 #  Created: 2026/04/27 15:03:24 by cehenrot        #+#    #+#               #
-#  Updated: 2026/05/06 13:15:02 by cehenrot        ###   ########.fr        #
+#  Updated: 2026/05/07 11:16:14 by cehenrot        ###   ########.fr        #
 #                                                                           #
 # ************************************************************************* #
 
@@ -40,7 +40,7 @@ def main() -> None:
         for turn in simulator.stock_turns:
             print(turn)
 
-    except Exception as e:
+    except ValueError as e:
         print(f"[ERROR]: main.py -> {e}")
 
 
