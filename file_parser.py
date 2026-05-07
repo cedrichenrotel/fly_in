@@ -6,7 +6,7 @@
 #  By: cehenrot <cehenrot@student.42.fr>         +#+  +:+       +#+         #
 #                                              +#+#+#+#+#+   +#+            #
 #  Created: 2026/04/27 15:02:34 by cehenrot        #+#    #+#               #
-#  Updated: 2026/05/07 11:38:34 by cehenrot        ###   ########.fr        #
+#  Updated: 2026/05/07 14:34:25 by cehenrot        ###   ########.fr        #
 #                                                                           #
 # ************************************************************************* #
 
@@ -78,7 +78,7 @@ def extract_metadata(lst_meta: list[str]) -> dict:
             if key == 'color':
                 dict_meta['color'] = val
             if key == 'zone':
-                dict_meta['zone_type'] = ZoneType[val].name
+                dict_meta['zone_type'] = ZoneType[val]
             if key == 'max_drones':
                 dict_meta['max_drones'] = int(val)
         return dict_meta

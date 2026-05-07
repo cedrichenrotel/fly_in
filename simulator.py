@@ -6,7 +6,7 @@
 #  By: cehenrot <cehenrot@student.42.fr>         +#+  +:+       +#+         #
 #                                              +#+#+#+#+#+   +#+            #
 #  Created: 2026/04/27 17:35:52 by cehenrot        #+#    #+#               #
-#  Updated: 2026/05/07 13:09:29 by cehenrot        ###   ########.fr        #
+#  Updated: 2026/05/07 13:56:54 by cehenrot        ###   ########.fr        #
 #                                                                           #
 # ************************************************************************* #
 
@@ -16,7 +16,7 @@ try:
     from zone import ZoneType
     from drone import Drone
     from graph import Graph
-    from algo_dijkstra import AlgoDijkstra
+    from algos import AlgoDijkstra
 except ImportError as e:
     print(f"[ERROR] simulator.py: {e}")
     sys.exit()
