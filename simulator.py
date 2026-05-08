@@ -6,7 +6,7 @@
 #  By: cehenrot <cehenrot@student.42lyon.fr>     +#+  +:+       +#+         #
 #                                              +#+#+#+#+#+   +#+            #
 #  Created: 2026/04/27 17:35:52 by cehenrot        #+#    #+#               #
-#  Updated: 2026/05/08 13:55:02 by cehenrot        ###   ########.fr        #
+#  Updated: 2026/05/08 14:27:31 by cehenrot        ###   ########.fr        #
 #                                                                           #
 # ************************************************************************* #
 
@@ -65,10 +65,16 @@ class Simulator():
 
         """run_drones — loops through each turn and moves each drone"""
         while not all(drone.is_arrived for drone in self.drones_id.values()):
+
             moves: list[tuple] = []
+            priority_drones = ([d for d in self.drones_id
+                               if self.drones_id[d].current_zone.zone_type ==
+                               ZoneType.priority])
+            other_drones = ([d for d in self.drones_id
+                            if self.drones_id[d].current_zone.zone_type !=
+                            ZoneType.priority])
 
-            for drone in self.drones_id:
-
+            for drone in priority_drones + other_drones:
                 current_drone = self.drones_id[drone]
 
                 if current_drone.is_arrived:
@@ -82,25 +88,30 @@ class Simulator():
                     continue
 
                 current_path = self.paths[drone]
-                current_index = current_path.index(current_drone.current_zone.name)
+                current_index = current_path.index(current_drone.
+                                                   current_zone.name)
                 next_path = current_path[current_index + 1]
                 next_zone = self.graph.dict_zones[next_path]
 
-                connection = self.graph.get_neighbors(current_drone.current_zone)
+                connection = self.graph.get_neighbors(current_drone.
+                                                      current_zone)
 
                 for conn in connection:
                     if conn.zone_a == next_zone or conn.zone_b == next_zone:
 
-                        nb_drones_entry = len([m for m in moves if m[2] == next_zone])
-                        nb_drones_exit = len([m for m in moves if m[1] == next_zone])
+                        nb_drones_entry = len([m for m in moves if m[2] ==
+                                               next_zone])
+                        nb_drones_exit = len([m for m in moves if m[1] ==
+                                              next_zone])
                         nb_current_drone = (next_zone.current_drones -
                                             nb_drones_exit + nb_drones_entry)
 
                         if (next_zone.zone_type != ZoneType.blocked and
                             len([m for m in moves
                                  if m[1] == current_drone.current_zone and
-                                 m[2] == next_zone]) < conn.max_link_capacity and
-                                 nb_current_drone < next_zone.max_drones):
+                                 m[2] == next_zone]) < conn.max_link_capacity
+                                and
+                                nb_current_drone < next_zone.max_drones):
 
                             moves.append((drone, current_drone.current_zone,
                                           next_zone))
@@ -112,7 +123,8 @@ class Simulator():
 
             for (drone, old_zone, next_zone) in moves:
                 old_zone.current_drones -= 1
-                self.drones_id[drone].drone_move(next_zone, self.graph.end_zone)
+                self.drones_id[drone].drone_move(next_zone,
+                                                 self.graph.end_zone)
                 next_zone.current_drones += 1
                 self.trajectory[drone].append(next_zone.name)
 
