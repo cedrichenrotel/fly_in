@@ -6,7 +6,7 @@
 #  By: cehenrot <cehenrot@student.42lyon.fr>     +#+  +:+       +#+         #
 #                                              +#+#+#+#+#+   +#+            #
 #  Created: 2026/04/27 17:37:58 by cehenrot        #+#    #+#               #
-#  Updated: 2026/04/28 17:00:32 by cehenrot        ###   ########.fr        #
+#  Updated: 2026/05/08 15:50:11 by cehenrot        ###   ########.fr        #
 #                                                                           #
 # ************************************************************************* #
 
@@ -32,3 +32,4 @@ class Connection():
         self.zone_b = zone_b
         self.current_drone = current_drone
         self.max_link_capacity = max_link_capacity
+        self.name = f"{self.zone_a.name}-{self.zone_b.name}"

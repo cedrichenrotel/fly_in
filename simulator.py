@@ -6,7 +6,7 @@
 #  By: cehenrot <cehenrot@student.42lyon.fr>     +#+  +:+       +#+         #
 #                                              +#+#+#+#+#+   +#+            #
 #  Created: 2026/04/27 17:35:52 by cehenrot        #+#    #+#               #
-#  Updated: 2026/05/08 14:27:31 by cehenrot        ###   ########.fr        #
+#  Updated: 2026/05/08 15:58:09 by cehenrot        ###   ########.fr        #
 #                                                                           #
 # ************************************************************************* #
 
@@ -67,68 +67,97 @@ class Simulator():
         while not all(drone.is_arrived for drone in self.drones_id.values()):
 
             moves: list[tuple] = []
-            priority_drones = ([d for d in self.drones_id
-                               if self.drones_id[d].current_zone.zone_type ==
-                               ZoneType.priority])
-            other_drones = ([d for d in self.drones_id
-                            if self.drones_id[d].current_zone.zone_type !=
-                            ZoneType.priority])
+            priority_drones = ([
+                d for d in self.drones_id
+                if self.drones_id[d].current_zone.zone_type ==
+                ZoneType.priority
+                ])
+            other_drones = ([
+                d for d in self.drones_id
+                if self.drones_id[d].current_zone.zone_type !=
+                ZoneType.priority
+                ])
 
             for drone in priority_drones + other_drones:
+
                 current_drone = self.drones_id[drone]
 
                 if current_drone.is_arrived:
                     continue
 
-                if current_drone.in_transit:
-                    current_drone.in_transit = False
-                    moves.append((drone, current_drone.current_zone,
-                                  current_drone.transit_destination))
-                    current_drone.transit_destination = None
-                    continue
-
                 current_path = self.paths[drone]
                 current_index = current_path.index(current_drone.
                                                    current_zone.name)
+                old_zone = current_drone.current_zone
                 next_path = current_path[current_index + 1]
                 next_zone = self.graph.dict_zones[next_path]
-
                 connection = self.graph.get_neighbors(current_drone.
                                                       current_zone)
 
+                if current_drone.in_transit:
+                    current_drone.in_transit = False
+
+                    moves.append((
+                        drone, current_drone.current_zone,
+                        current_drone.transit_destination,
+                        current_drone.transit_conn_name
+                        ))
+
+                    current_drone.transit_destination = None
+                    continue
+
                 for conn in connection:
                     if conn.zone_a == next_zone or conn.zone_b == next_zone:
+                        nb_drones_entry = len([
+                            m for m in moves if m[2] == next_zone
+                            ])
 
-                        nb_drones_entry = len([m for m in moves if m[2] ==
-                                               next_zone])
-                        nb_drones_exit = len([m for m in moves if m[1] ==
-                                              next_zone])
-                        nb_current_drone = (next_zone.current_drones -
-                                            nb_drones_exit + nb_drones_entry)
+                        nb_drones_exit = len([
+                            m for m in moves if m[1] == next_zone
+                            ])
+
+                        nb_current_drone = (
+                            next_zone.current_drones - nb_drones_exit +
+                            nb_drones_entry
+                            )
 
                         if (next_zone.zone_type != ZoneType.blocked and
                             len([m for m in moves
-                                 if m[1] == current_drone.current_zone and
+                                 if m[1] == old_zone and
                                  m[2] == next_zone]) < conn.max_link_capacity
                                 and
                                 nb_current_drone < next_zone.max_drones):
 
-                            moves.append((drone, current_drone.current_zone,
-                                          next_zone))
-
                             if next_zone.zone_type == ZoneType.restricted:
                                 current_drone.in_transit = True
+
                                 current_drone.transit_destination = next_zone
+                                moves.append((
+                                    drone,
+                                    old_zone,
+                                    next_zone,
+                                    conn.name
+                                ))
+
+                            else:
+                                moves.append((
+                                    drone,
+                                    old_zone,
+                                    next_zone,
+                                    None
+                                ))
                             break
 
-            for (drone, old_zone, next_zone) in moves:
+            for (drone, old_zone, next_zone, _) in moves:
                 old_zone.current_drones -= 1
                 self.drones_id[drone].drone_move(next_zone,
                                                  self.graph.end_zone)
                 next_zone.current_drones += 1
                 self.trajectory[drone].append(next_zone.name)
 
-            self.stock_turns.append([f"{drone}-{next_zone.name}"
-                                     for (drone, _, next_zone) in moves])
+            self.stock_turns.append([
+                f"{drone}-{conn_name if conn_name else next_zone.name}"
+                for (drone, _, next_zone, conn_name) in moves
+                ])
 
             self.nb_turn += 1
