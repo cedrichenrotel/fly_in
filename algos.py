@@ -3,10 +3,10 @@
 #                                                      :::      ::::::::    #
 #  algos.py                                          :+:      :+:    :+:    #
 #                                                  +:+ +:+         +:+      #
-#  By: cehenrot <cehenrot@student.42.fr>         +#+  +:+       +#+         #
+#  By: cehenrot <cehenrot@student.42lyon.fr>     +#+  +:+       +#+         #
 #                                              +#+#+#+#+#+   +#+            #
 #  Created: 2026/04/30 14:27:33 by cehenrot        #+#    #+#               #
-#  Updated: 2026/05/07 15:03:54 by cehenrot        ###   ########.fr        #
+#  Updated: 2026/05/08 10:48:16 by cehenrot        ###   ########.fr        #
 #                                                                           #
 # ************************************************************************* #
 
@@ -113,10 +113,47 @@ class AlgoAstar(Algo):
         z_a = self.graph.dict_zones[zone_name]
         z_b = self.graph.end_zone
 
-        return abs(z_a.x - z_b.x) + abs(z_a.y - z_b.y)\
+        return abs(z_a.x - z_b.x) + abs(z_a.y - z_b.y)
 
     def initialize(self) -> None:
-        pass
+        self.distances = {vertex: sys.maxsize for vertex in
+                          self.graph.dict_zones}
+
+        if self.start is None:
+            raise Exception("algo_astar -> The starting point has not been"
+                            " defined.")
+
+        start_heuristic = self.heuristic(self.start.name)
+
+        self.distances[self.start.name] = 0
+        self.predecessors = {vertex: None for vertex in self.graph.dict_zones}
+        self.heap: List[Tuple[int, int, str]] = []
+
+        heapq.heappush(self.heap, (start_heuristic, 0, self.start.name))
 
     def run(self) -> None:
-        pass
+        self.initialize()
+
+        while self.heap:
+            _, current_cost, zone = heapq.heappop(self.heap)
+
+            if current_cost > self.distances[zone]:
+                continue
+
+            for neighbor in self.graph.get_neighbors(self.graph.
+                                                     dict_zones[zone]):
+
+                if zone == neighbor.zone_a.name:
+                    new_neighbor = neighbor.zone_b
+                else:
+                    new_neighbor = neighbor.zone_a
+
+                new_cost = current_cost + new_neighbor.zone_type.cost()
+
+                """course update"""
+                if new_cost < self.distances[new_neighbor.name]:
+                    self.distances[new_neighbor.name] = new_cost
+                    self.predecessors[new_neighbor.name] = zone
+                    new_priority = new_cost + self.heuristic(new_neighbor.name)
+                    heapq.heappush(self.heap, (new_priority, new_cost,
+                                               new_neighbor.name))

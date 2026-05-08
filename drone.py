@@ -3,10 +3,10 @@
 #                                                      :::      ::::::::    #
 #  drone.py                                          :+:      :+:    :+:    #
 #                                                  +:+ +:+         +:+      #
-#  By: cehenrot <cehenrot@student.42.fr>         +#+  +:+       +#+         #
+#  By: cehenrot <cehenrot@student.42lyon.fr>     +#+  +:+       +#+         #
 #                                              +#+#+#+#+#+   +#+            #
 #  Created: 2026/04/27 17:31:49 by cehenrot        #+#    #+#               #
-#  Updated: 2026/05/06 09:28:47 by cehenrot        ###   ########.fr        #
+#  Updated: 2026/05/08 11:34:24 by cehenrot        ###   ########.fr        #
 #                                                                           #
 # ************************************************************************* #
 
@@ -28,6 +28,8 @@ class Drone():
         self.drone_id = drone_id
         self.current_zone = current_zone
         self.is_arrived = is_arrived
+        self.in_transit: bool = False
+        self.transit_destination: Zone | None = None
 
     """Check the drone's position and see if it has reached its destination"""
     def drone_move(self, zone: Zone, hub_end: Zone) -> None:
