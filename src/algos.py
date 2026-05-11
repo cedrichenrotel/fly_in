@@ -3,10 +3,10 @@
 #                                                      :::      ::::::::    #
 #  algos.py                                          :+:      :+:    :+:    #
 #                                                  +:+ +:+         +:+      #
-#  By: cehenrot <cehenrot@student.42lyon.fr>     +#+  +:+       +#+         #
+#  By: cehenrot <cehenrot@student.42.fr>         +#+  +:+       +#+         #
 #                                              +#+#+#+#+#+   +#+            #
 #  Created: 2026/04/30 14:27:33 by cehenrot        #+#    #+#               #
-#  Updated: 2026/05/08 10:48:16 by cehenrot        ###   ########.fr        #
+#  Updated: 2026/05/11 13:26:25 by cehenrot        ###   ########.fr        #
 #                                                                           #
 # ************************************************************************* #
 
@@ -49,6 +49,10 @@ class Algo(ABC):
             current = self.predecessors.get(current)
 
         path.reverse()
+
+        if path[0] != self.graph.start_zone.name:
+            raise Exception("No valid path found")
+
         return path
 
 

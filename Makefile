@@ -2,7 +2,7 @@ PYTHON := python3
 VENV := .venv
 PIP := $(VENV)/bin/pip
 PY := $(VENV)/bin/python
-FILE := main.py
+FILE := src/main.py
 MAP := map.txt
 
 .PHONY: install run debug clean lint lint-strict
@@ -18,7 +18,7 @@ install: venv
 	$(PIP) install -r requierements.txt
 
 run: venv
-	@$(PY) $(FILE) $(MAP)
+	@PYTHONPATH=src $(PY) src/main.py $(MAP)
 
 debug: venv
 	$(PY) -m pdb $(FILE)

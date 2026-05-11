@@ -3,10 +3,10 @@
 #                                                      :::      ::::::::    #
 #  simulator.py                                      :+:      :+:    :+:    #
 #                                                  +:+ +:+         +:+      #
-#  By: cehenrot <cehenrot@student.42lyon.fr>     +#+  +:+       +#+         #
+#  By: cehenrot <cehenrot@student.42.fr>         +#+  +:+       +#+         #
 #                                              +#+#+#+#+#+   +#+            #
 #  Created: 2026/04/27 17:35:52 by cehenrot        #+#    #+#               #
-#  Updated: 2026/05/08 15:58:09 by cehenrot        ###   ########.fr        #
+#  Updated: 2026/05/11 13:27:26 by cehenrot        ###   ########.fr        #
 #                                                                           #
 # ************************************************************************* #
 
@@ -16,7 +16,7 @@ try:
     from zone import ZoneType
     from drone import Drone
     from graph import Graph
-    from algos import AlgoDijkstra
+    from algos import AlgoDijkstra, AlgoAstar
 except ImportError as e:
     print(f"[ERROR] simulator.py: {e}")
     sys.exit()
@@ -55,11 +55,36 @@ class Simulator():
     def init_run(self) -> None:
         """assigning a single path to all drones"""
 
-        algo = AlgoDijkstra(self.graph)
-        algo.run()
-        path = algo.reconstruct_path()
-        for drone in self.drones_id:
-            self.paths[drone] = path.copy()
+        algo_d = AlgoDijkstra(self.graph)
+        algo_d.run()
+
+        path1 = algo_d.reconstruct_path()
+
+        gate = self.graph.dict_zones[path1[1]]
+        original_type = gate.zone_type
+        gate.zone_type = ZoneType.blocked
+
+        algo_a = AlgoAstar(self.graph)
+        algo_a.run()
+
+        try:
+            path2 = algo_a.reconstruct_path()
+            if len(path2) > len(path1):
+                raise Exception("path2 too long")
+        except Exception as e:
+            print(f"failled:{e}")
+            gate.zone_type = original_type
+            for drone in self.drones_id:
+                self.paths[drone] = path1.copy()
+            return
+
+        gate.zone_type = original_type
+
+        for i, drone in enumerate(self.drones_id):
+            if i % 2 == 0:
+                self.paths[drone] = path1.copy()
+            else:
+                self.paths[drone] = path2.copy()
 
     def run_drones(self) -> None:
 
@@ -88,6 +113,7 @@ class Simulator():
                 current_path = self.paths[drone]
                 current_index = current_path.index(current_drone.
                                                    current_zone.name)
+
                 old_zone = current_drone.current_zone
                 next_path = current_path[current_index + 1]
                 next_zone = self.graph.dict_zones[next_path]
