@@ -6,7 +6,7 @@
 #  By: cehenrot <cehenrot@student.42.fr>         +#+  +:+       +#+         #
 #                                              +#+#+#+#+#+   +#+            #
 #  Created: 2026/05/11 13:34:02 by cehenrot        #+#    #+#               #
-#  Updated: 2026/05/11 14:20:15 by cehenrot        ###   ########.fr        #
+#  Updated: 2026/05/11 14:59:35 by cehenrot        ###   ########.fr        #
 #                                                                           #
 # ************************************************************************* #
 
@@ -31,10 +31,11 @@ class Visualizer(arcade.Window):
 
     def on_draw(self) -> None:
 
-        """dessiner les zones, connexions, drones"""
+        """dessiner les zones, connexions, drones de 0"""
         pass
 
     def on_key_press(self, key, modifiers) -> None:
 
         """avancer d'un tour avec espace"""
         pass
+    
