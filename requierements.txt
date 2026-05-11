@@ -1,8 +1,9 @@
+annotated-types==0.7.0
 arcade==3.3.3
 attrs==26.1.0
 cffi==2.0.0
 flake8==7.3.0
-librt==0.10.0
+librt==0.9.0
 mccabe==0.7.0
 mypy==1.20.2
 mypy_extensions==1.1.0
@@ -10,8 +11,11 @@ pathspec==1.1.1
 pillow==11.3.0
 pycodestyle==2.14.0
 pycparser==3.0
+pydantic==2.13.3
+pydantic_core==2.46.3
 pyflakes==3.4.0
 pyglet==2.1.14
 pymunk==6.9.0
 pytiled_parser==2.2.9
+typing-inspection==0.4.2
 typing_extensions==4.15.0

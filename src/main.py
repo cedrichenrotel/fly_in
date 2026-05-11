@@ -3,10 +3,10 @@
 #                                                      :::      ::::::::    #
 #  main.py                                           :+:      :+:    :+:    #
 #                                                  +:+ +:+         +:+      #
-#  By: cehenrot <cehenrot@student.42.fr>         +#+  +:+       +#+         #
+#  By: cehenrot <cehenrot@student.42lyon.fr>     +#+  +:+       +#+         #
 #                                              +#+#+#+#+#+   +#+            #
 #  Created: 2026/04/27 15:03:24 by cehenrot        #+#    #+#               #
-#  Updated: 2026/05/11 13:25:23 by cehenrot        ###   ########.fr        #
+#  Updated: 2026/05/11 17:40:32 by cehenrot        ###   ########.fr        #
 #                                                                           #
 # ************************************************************************* #
 
@@ -15,6 +15,7 @@ import sys
 try:
     from file_parser import parse_file
     from simulator import Simulator
+    from visualizer import Visualizer
 except ImportError as e:
     print(f"[ERROR] main.py: {e}")
     sys.exit()
@@ -40,9 +41,12 @@ def main() -> None:
         for turn in simulator.stock_turns:
             print(turn)
 
+        visualizer = Visualizer(graph, simulator.stock_turns)
+        visualizer.run()
+        visualizer.on_key_press()
+
     except ValueError as e:
         print(f"[ERROR]: main.py -> {e}")
-
 
 if __name__ == "__main__":
     main()
