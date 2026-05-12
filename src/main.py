@@ -6,7 +6,7 @@
 #  By: cehenrot <cehenrot@student.42lyon.fr>     +#+  +:+       +#+         #
 #                                              +#+#+#+#+#+   +#+            #
 #  Created: 2026/04/27 15:03:24 by cehenrot        #+#    #+#               #
-#  Updated: 2026/05/11 17:40:32 by cehenrot        ###   ########.fr        #
+#  Updated: 2026/05/12 13:51:42 by cehenrot        ###   ########.fr        #
 #                                                                           #
 # ************************************************************************* #
 
@@ -43,10 +43,11 @@ def main() -> None:
 
         visualizer = Visualizer(graph, simulator.stock_turns)
         visualizer.run()
-        visualizer.on_key_press()
+        # visualizer.on_key_press()
 
     except ValueError as e:
         print(f"[ERROR]: main.py -> {e}")
+
 
 if __name__ == "__main__":
     main()
