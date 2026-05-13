@@ -3,10 +3,10 @@
 #                                                      :::      ::::::::    #
 #  main.py                                           :+:      :+:    :+:    #
 #                                                  +:+ +:+         +:+      #
-#  By: cehenrot <cehenrot@student.42lyon.fr>     +#+  +:+       +#+         #
+#  By: cehenrot <cehenrot@student.42.fr>         +#+  +:+       +#+         #
 #                                              +#+#+#+#+#+   +#+            #
 #  Created: 2026/04/27 15:03:24 by cehenrot        #+#    #+#               #
-#  Updated: 2026/05/12 13:51:42 by cehenrot        ###   ########.fr        #
+#  Updated: 2026/05/13 11:20:25 by cehenrot        ###   ########.fr        #
 #                                                                           #
 # ************************************************************************* #
 
@@ -39,11 +39,10 @@ def main() -> None:
         print()
 
         for turn in simulator.stock_turns:
-            print(turn)
+            print(' '.join(turn))
 
         visualizer = Visualizer(graph, simulator.stock_turns)
         visualizer.run()
-        # visualizer.on_key_press()
 
     except ValueError as e:
         print(f"[ERROR]: main.py -> {e}")
