@@ -3,10 +3,10 @@
 #                                                      :::      ::::::::    #
 #  visualizer.py                                     :+:      :+:    :+:    #
 #                                                  +:+ +:+         +:+      #
-#  By: cehenrot <cehenrot@student.42.fr>         +#+  +:+       +#+         #
+#  By: cehenrot <cehenrot@student.42lyon.fr>     +#+  +:+       +#+         #
 #                                              +#+#+#+#+#+   +#+            #
 #  Created: 2026/05/11 13:34:02 by cehenrot        #+#    #+#               #
-#  Updated: 2026/05/13 14:32:17 by cehenrot        ###   ########.fr        #
+#  Updated: 2026/05/13 16:52:16 by cehenrot        ###   ########.fr        #
 #                                                                           #
 # ************************************************************************* #
 
@@ -26,16 +26,13 @@ SCREEN_HEIGHT: int = 600
 SCREEN_TITLE: str = "Fly-in Simulator"
 
 
-class Window(arcade.Window):
+class MenuView(arcade.View):
 
     """creating the menu from the menu card"""
     def __init__(self) -> None:
-        super().__init__(
-            SCREEN_WIDTH,
-            SCREEN_HEIGHT,
-            SCREEN_TITLE
-            )
-        self.show_view(MenuView())
+        super().__init__()
+        self.lst_maps = self.get_map_file("maps")
+        self.select_map = 0
 
     def get_map_file(directory: str = "maps") -> list[Path]:
 
@@ -49,11 +46,26 @@ class Window(arcade.Window):
         return maps
 
 
+class Window(arcade.Window):
+
+    """allows you to perform two operations:
+        Create the Arcade window (size, title)
+        Display the first view (the menu)"""
+    def __init__(self) -> None:
+        super().__init__(
+            SCREEN_WIDTH,
+            SCREEN_HEIGHT,
+            SCREEN_TITLE
+            )
+        self.show_view(MenuView())
+
+
 class SimulationView(arcade.View):
 
     """class designed for viewing drones"""
     def __init__(self, graph: Graph, stock_turn: list[list[str]]) -> None:
 
+        super().__init__()
         self.graph = graph
         self.stock_turn = stock_turn
         self.current_turn: int = 0
