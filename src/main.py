@@ -1,51 +1,10 @@
-# ************************************************************************* #
-#                                                                           #
-#                                                      :::      ::::::::    #
-#  main.py                                           :+:      :+:    :+:    #
-#                                                  +:+ +:+         +:+      #
-#  By: cehenrot <cehenrot@student.42.fr>         +#+  +:+       +#+         #
-#                                              +#+#+#+#+#+   +#+            #
-#  Created: 2026/04/27 15:03:24 by cehenrot        #+#    #+#               #
-#  Updated: 2026/05/13 11:20:25 by cehenrot        ###   ########.fr        #
-#                                                                           #
-# ************************************************************************* #
-
-import sys
-
-try:
-    from file_parser import parse_file
-    from simulator import Simulator
-    from visualizer import Visualizer
-except ImportError as e:
-    print(f"[ERROR] main.py: {e}")
-    sys.exit()
+from visualizer import Window
+import arcade
 
 
 def main() -> None:
-
-    try:
-        if len(sys.argv) != 2:
-            raise Exception("[WARNING]: Incorrect number of arguments")
-        file = sys.argv[1]
-        graph = parse_file(file)
-
-        simulator = Simulator(graph)
-        simulator.init_drone()
-        simulator.init_run()
-        simulator.run_drones()
-
-        print("___SIMULATION RESULTS___")
-        print(f"\nNumber of turn: {simulator.nb_turn}")
-        print()
-
-        for turn in simulator.stock_turns:
-            print(' '.join(turn))
-
-        visualizer = Visualizer(graph, simulator.stock_turns)
-        visualizer.run()
-
-    except ValueError as e:
-        print(f"[ERROR]: main.py -> {e}")
+    Window()
+    arcade.run()
 
 
 if __name__ == "__main__":

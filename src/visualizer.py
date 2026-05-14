@@ -6,13 +6,16 @@
 #  By: cehenrot <cehenrot@student.42lyon.fr>     +#+  +:+       +#+         #
 #                                              +#+#+#+#+#+   +#+            #
 #  Created: 2026/05/11 13:34:02 by cehenrot        #+#    #+#               #
-#  Updated: 2026/05/13 16:52:16 by cehenrot        ###   ########.fr        #
+#  Updated: 2026/05/14 17:00:12 by cehenrot        ###   ########.fr        #
 #                                                                           #
 # ************************************************************************* #
 
 import sys
 
 try:
+    from collections import defaultdict
+    from file_parser import parse_file
+    from simulator import Simulator
     from graph import Graph
     from pathlib import Path
     import arcade
@@ -24,34 +27,114 @@ MARGIN: int = 50
 SCREEN_WIDTH: int = 800
 SCREEN_HEIGHT: int = 600
 SCREEN_TITLE: str = "Fly-in Simulator"
+BTN_W: int = 200
+BTN_H: int = 50
 
 
 class MenuView(arcade.View):
 
-    """creating the menu from the menu card"""
     def __init__(self) -> None:
-        super().__init__()
-        self.lst_maps = self.get_map_file("maps")
-        self.select_map = 0
 
-    def get_map_file(directory: str = "maps") -> list[Path]:
+        """creating the menu from the menu card"""
+        super().__init__()
+        self.list_maps: list[Path] = self.get_map_file("maps")
+        self.select_map: int = 0
+        self.maps_diff: list[dict] = self.choice_diff_maps()
+        self.background = (arcade.load_texture("image/background.png"))
+        self.positions = self.calculate_positions(list(self.maps_diff.keys()))
+        self.selected_diff: str = ""
+
+    def get_map_file(self, directory: str = "maps") -> list[Path]:
 
         """Retrieves a list of all .txt files in the specified folder."""
         folder = Path(directory)
-        if not folder:
+        if not folder.exists():
             print(f"[ERROR] The folder “{directory}” cannot be found.")
             return []
 
-        maps = list(Path("maps/").glob("*.txt"))
+        maps = list(folder.glob("**/*.txt"))
         return maps
+
+    def choice_diff_maps(self) -> list[dict]:
+
+        """Storing .txt files by difficulty"""
+        dict_maps = defaultdict(list)
+
+        for path_file in self.list_maps:
+            difficulty = path_file.parent.name
+            dict_maps[difficulty].append(path_file)
+        return dict_maps
+
+    def calculate_positions(self, items: list) -> dict[str, tuple[int, int]]:
+
+        """This method allows you to centre text """
+        position: dict[str, tuple[int, int]] = {}
+        espacement = SCREEN_HEIGHT // (len(items) + 1)
+
+        for i, difficulty in enumerate(items):
+            y = SCREEN_HEIGHT - espacement * (i + 1)
+            x = SCREEN_WIDTH // 2
+            position[difficulty] = (x, y)
+
+        return position
+
+    def on_draw(self) -> None:
+
+        self.window.clear()
+        arcade.draw_texture_rect(
+            self.background,
+            arcade.LRBT(0, SCREEN_WIDTH, 0, SCREEN_HEIGHT)
+            )
+        if not self.selected_diff:
+            for difficulty, _ in self.maps_diff.items():
+                x, y = self.positions[difficulty]
+                arcade.draw_text(difficulty, x, y, arcade.color.WHITE, 25,
+                                 anchor_x="center")
+                arcade.draw_rect_outline(
+                    arcade.LRBT(x - BTN_W // 2, x + BTN_W // 2,
+                                y - BTN_H // 2, y + BTN_H // 2),
+                    arcade.color.WHITE,
+                    2,
+                    anchor_x="center"
+                )
+        else:
+            choice_positions = self.maps_diff[self.selected_diff]
+            map_positions = self.calculate_positions(choice_positions)
+            for map in self.maps_diff[self.selected_diff]:
+                x, y = map_positions[map]
+                arcade.draw_text(map.stem, x, y, arcade.color.WHITE, 25,
+                                 anchor_x="center")
+
+    def on_mouse_press(self, x: int, y: int, _: int, __: int) -> None:
+        """This function allows you to click on the difficulty level in
+            the menu"""
+        if not self.selected_diff:
+            for difficulty, (px, py) in self.positions.items():
+                if abs(x - px) < 100 and abs(y - py) < 20:
+                    self.selected_diff = difficulty
+        else:
+            choice_positions = self.maps_diff[self.selected_diff]
+            map_positions = self.calculate_positions(choice_positions)
+            for map_file in self.maps_diff[self.selected_diff]:
+                px, py = map_positions[map_file]
+                if abs(x - px) < 100 and abs(y - py) < 20:
+                    graph = parse_file(map_file)
+                    simulator = Simulator(graph)
+                    simulator.init_drone()
+                    simulator.init_run()
+                    simulator.run_drones()
+                    simulationview = SimulationView(graph,
+                                                    simulator.stock_turns)
+                    self.window.show_view(simulationview)
 
 
 class Window(arcade.Window):
 
-    """allows you to perform two operations:
+    def __init__(self) -> None:
+
+        """allows you to perform two operations:
         Create the Arcade window (size, title)
         Display the first view (the menu)"""
-    def __init__(self) -> None:
         super().__init__(
             SCREEN_WIDTH,
             SCREEN_HEIGHT,
@@ -62,9 +145,9 @@ class Window(arcade.Window):
 
 class SimulationView(arcade.View):
 
-    """class designed for viewing drones"""
     def __init__(self, graph: Graph, stock_turn: list[list[str]]) -> None:
 
+        """class designed for viewing drones"""
         super().__init__()
         self.graph = graph
         self.stock_turn = stock_turn
@@ -95,6 +178,7 @@ class SimulationView(arcade.View):
         self.turn_speed = 0.5
 
     def to_pixel(self, x, y, min_x, min_y, max_x, max_y):
+
         x_pixel = MARGIN + (x - min_x) * ((SCREEN_WIDTH - 2 * MARGIN) / max_x)
         y_pixel = MARGIN + (y - min_y) * ((SCREEN_HEIGHT - 2 * MARGIN) / max_y)
         return x_pixel, y_pixel
@@ -118,11 +202,13 @@ class SimulationView(arcade.View):
             arcade.draw_ellipse_filled(x_pixel, y_pixel, 40, 30, color)
 
     def draw_connections(self) -> None:
-        """Display connections by area"""
-        drawn = set()
-        """drawn stores already drawn connections
+
+        """Display connections by area,
+            drawn stores already drawn connections
             frozenset ignores order: (a,b) == (b,a) to avoid drawing the
             same line twice"""
+        drawn = set()
+
         for connections in self.graph.dict_adjacency.values():
             for connection in connections:
                 pair = frozenset((connection.zone_a.name,
@@ -149,9 +235,10 @@ class SimulationView(arcade.View):
                 arcade.draw_line(xa, ya, xb, yb, arcade.color.GRAY, 2)
 
     def draw_drones(self) -> None:
-        current_turn = self.stock_turn[self.current_turn]
 
         """display of drones on the map, turn by turn """
+        current_turn = self.stock_turn[self.current_turn]
+
         for drone in current_turn:
             zone_name = drone.split('-', 1)[1]
             if '-' in zone_name:
@@ -197,7 +284,8 @@ class SimulationView(arcade.View):
     def on_update(self, delta_time: float) -> None:
 
         """The entire logic for updating the simulator.
-            param delt a_time: Time elapsed since the last update (in seconds).
+            param delt a_time: Time elapsed since the last update
+            (in seconds).
             Typically, around 1/60th of a second."""
         self.time_since_last_turn += delta_time
 
@@ -210,5 +298,6 @@ class SimulationView(arcade.View):
                 print(f" tour: {self.current_turn}")
 
     def on_key_press(self, key: int, _) -> None:
+
         if key == arcade.key.ESCAPE:
             arcade.exit()
