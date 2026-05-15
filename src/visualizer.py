@@ -6,7 +6,7 @@
 #  By: cehenrot <cehenrot@student.42lyon.fr>     +#+  +:+       +#+         #
 #                                              +#+#+#+#+#+   +#+            #
 #  Created: 2026/05/11 13:34:02 by cehenrot        #+#    #+#               #
-#  Updated: 2026/05/14 17:00:12 by cehenrot        ###   ########.fr        #
+#  Updated: 2026/05/15 16:28:13 by cehenrot        ###   ########.fr        #
 #                                                                           #
 # ************************************************************************* #
 
@@ -24,9 +24,10 @@ except ImportError as e:
     sys.exit()
 
 MARGIN: int = 50
-SCREEN_WIDTH: int = 800
-SCREEN_HEIGHT: int = 600
+SCREEN_WIDTH: int = 1000
+SCREEN_HEIGHT: int = 800
 SCREEN_TITLE: str = "Fly-in Simulator"
+PADDING: int = 20
 BTN_W: int = 200
 BTN_H: int = 50
 
@@ -40,7 +41,7 @@ class MenuView(arcade.View):
         self.list_maps: list[Path] = self.get_map_file("maps")
         self.select_map: int = 0
         self.maps_diff: list[dict] = self.choice_diff_maps()
-        self.background = (arcade.load_texture("image/background.png"))
+        self.menu = arcade.load_texture("image/menu.png")
         self.positions = self.calculate_positions(list(self.maps_diff.keys()))
         self.selected_diff: str = ""
 
@@ -65,16 +66,21 @@ class MenuView(arcade.View):
             dict_maps[difficulty].append(path_file)
         return dict_maps
 
-    def calculate_positions(self, items: list) -> dict[str, tuple[int, int]]:
+    def calculate_positions(self, items: list) -> dict[str, tuple[int, int,
+                                                                  int]]:
 
         """This method allows you to centre text """
-        position: dict[str, tuple[int, int]] = {}
+        position: dict[str, tuple[int, int, int]] = {}
         espacement = SCREEN_HEIGHT // (len(items) + 1)
 
         for i, difficulty in enumerate(items):
+            label = (difficulty.stem if hasattr(difficulty, 'stem')
+                     else str(difficulty))
+            text_width = (arcade.Text(label, 0, 0, arcade.color.GOLD, 25)
+                          .content_width)
             y = SCREEN_HEIGHT - espacement * (i + 1)
             x = SCREEN_WIDTH // 2
-            position[difficulty] = (x, y)
+            position[difficulty] = (x, y, text_width + PADDING)
 
         return position
 
@@ -82,41 +88,46 @@ class MenuView(arcade.View):
 
         self.window.clear()
         arcade.draw_texture_rect(
-            self.background,
+            self.menu,
             arcade.LRBT(0, SCREEN_WIDTH, 0, SCREEN_HEIGHT)
             )
         if not self.selected_diff:
             for difficulty, _ in self.maps_diff.items():
-                x, y = self.positions[difficulty]
-                arcade.draw_text(difficulty, x, y, arcade.color.WHITE, 25,
-                                 anchor_x="center")
+                x, y, btn_w = self.positions[difficulty]
+                arcade.draw_text(difficulty, x, y, arcade.color.GOLD, 25,
+                                 anchor_x="center", anchor_y="center")
                 arcade.draw_rect_outline(
-                    arcade.LRBT(x - BTN_W // 2, x + BTN_W // 2,
+                    arcade.LRBT(x - btn_w // 2, x + btn_w // 2,
                                 y - BTN_H // 2, y + BTN_H // 2),
-                    arcade.color.WHITE,
+                    arcade.color.GOLD,
                     2,
-                    anchor_x="center"
                 )
         else:
             choice_positions = self.maps_diff[self.selected_diff]
             map_positions = self.calculate_positions(choice_positions)
             for map in self.maps_diff[self.selected_diff]:
-                x, y = map_positions[map]
-                arcade.draw_text(map.stem, x, y, arcade.color.WHITE, 25,
-                                 anchor_x="center")
+                x, y, btn_w = map_positions[map]
+                arcade.draw_text(map.stem, x, y, arcade.color.GOLD, 25,
+                                 anchor_x="center", anchor_y="center")
+                arcade.draw_rect_outline(
+                    arcade.LRBT(x - btn_w // 2, x + btn_w // 2,
+                                y - BTN_H // 2, y + BTN_H // 2),
+                    arcade.color.GOLD,
+                    2,
+                )
 
     def on_mouse_press(self, x: int, y: int, _: int, __: int) -> None:
         """This function allows you to click on the difficulty level in
             the menu"""
         if not self.selected_diff:
-            for difficulty, (px, py) in self.positions.items():
+            for difficulty, (px, py, _) in self.positions.items():
                 if abs(x - px) < 100 and abs(y - py) < 20:
                     self.selected_diff = difficulty
         else:
             choice_positions = self.maps_diff[self.selected_diff]
             map_positions = self.calculate_positions(choice_positions)
             for map_file in self.maps_diff[self.selected_diff]:
-                px, py = map_positions[map_file]
+                px, py, _ = map_positions[map_file]
                 if abs(x - px) < 100 and abs(y - py) < 20:
                     graph = parse_file(map_file)
                     simulator = Simulator(graph)
@@ -162,10 +173,12 @@ class SimulationView(arcade.View):
         self.simulation_finished: bool = False
         self.valid_text: object = arcade.Text(
             "",
-            200,
-            SCREEN_HEIGHT - 300,
-            arcade.color.WHITE,
-            50
+            SCREEN_WIDTH // 2,
+            SCREEN_HEIGHT // 2,
+            arcade.color.GOLD,
+            50,
+            anchor_x="center",
+            anchor_y="center"
             )
         self.min_x = min(zone.x for zone in self.graph.dict_zones.values())
         self.min_y = min(zone.y for zone in self.graph.dict_zones.values())
@@ -176,6 +189,10 @@ class SimulationView(arcade.View):
 
         self.time_since_last_turn = 0.0
         self.turn_speed = 0.5
+        self.drone_positions: dict = {}
+        self.target_positions: dict = {}
+        self.background = arcade.load_texture("image/background.png")
+        self.drone_texture = arcade.load_texture("image/drone.png")
 
     def to_pixel(self, x, y, min_x, min_y, max_x, max_y):
 
@@ -232,7 +249,7 @@ class SimulationView(arcade.View):
                     self.max_x,
                     self.max_y
                     )
-                arcade.draw_line(xa, ya, xb, yb, arcade.color.GRAY, 2)
+                arcade.draw_line(xa, ya, xb, yb, arcade.color.GRAY, 5)
 
     def draw_drones(self) -> None:
 
@@ -262,15 +279,20 @@ class SimulationView(arcade.View):
                 self.max_y
                 )
 
-            arcade.draw_line(x_pixel + 10, y_pixel, x_pixel - 10, y_pixel,
-                             arcade.color.BLACK, 3)
-            arcade.draw_line(x_pixel, y_pixel + 10, x_pixel, y_pixel - 10,
-                             arcade.color.BLACK, 3)
+            arcade.draw_texture_rect(self.drone_texture,
+                                     arcade.LRBT(x_pixel - 15,
+                                                 x_pixel + 15,
+                                                 y_pixel - 15,
+                                                 y_pixel + 15
+                                                 ))
 
     def on_draw(self) -> None:
 
         """dessiner les zones, connexions, drones de 0"""
         self.window.clear()
+        arcade.draw_texture_rect(self.background,
+                                 arcade.LRBT(0, SCREEN_WIDTH, 0, SCREEN_HEIGHT)
+                                 )
         self.turn_text.value = f"tour: {self.current_turn}"
         self.turn_text.draw()
         self.draw_connections()
@@ -288,6 +310,12 @@ class SimulationView(arcade.View):
             (in seconds).
             Typically, around 1/60th of a second."""
         self.time_since_last_turn += delta_time
+
+        for drone_name, target_pos in self.target_positions.items():
+            current = self.drone_positions.get(drone_name, target_pos)
+            new_x = current[0] + (target_pos[0] - current[0]) * 0.1
+            new_y = current[1] + (target_pos[1] - current[1]) * 0.1
+            self.drone_positions[drone_name] = (new_x, new_y)
 
         if self.time_since_last_turn > self.turn_speed:
             if self.current_turn < len(self.stock_turn) - 1:
