@@ -3,10 +3,10 @@
 #                                                      :::      ::::::::    #
 #  simulator.py                                      :+:      :+:    :+:    #
 #                                                  +:+ +:+         +:+      #
-#  By: cehenrot <cehenrot@student.42lyon.fr>     +#+  +:+       +#+         #
+#  By: cehenrot <cehenrot@student.42.fr>         +#+  +:+       +#+         #
 #                                              +#+#+#+#+#+   +#+            #
 #  Created: 2026/04/27 17:35:52 by cehenrot        #+#    #+#               #
-#  Updated: 2026/05/12 13:39:35 by cehenrot        ###   ########.fr        #
+#  Updated: 2026/05/18 13:26:35 by cehenrot        ###   ########.fr        #
 #                                                                           #
 # ************************************************************************* #
 
@@ -69,8 +69,6 @@ class Simulator():
 
         try:
             path2 = algo_a.reconstruct_path()
-            if len(path2) > len(path1):
-                raise Exception("path2 too long")
         except Exception as e:
             print(f"failled:{e}")
             gate.zone_type = original_type

@@ -6,7 +6,7 @@
 #  By: cehenrot <cehenrot@student.42.fr>         +#+  +:+       +#+         #
 #                                              +#+#+#+#+#+   +#+            #
 #  Created: 2026/05/11 13:34:02 by cehenrot        #+#    #+#               #
-#  Updated: 2026/05/18 11:48:07 by cehenrot        ###   ########.fr        #
+#  Updated: 2026/05/18 15:01:57 by cehenrot        ###   ########.fr        #
 #                                                                           #
 # ************************************************************************* #
 
@@ -24,8 +24,8 @@ except ImportError as e:
     sys.exit()
 
 MARGIN: int = 50
-SCREEN_WIDTH: int = 1000
-SCREEN_HEIGHT: int = 800
+SCREEN_WIDTH: int = 1300
+SCREEN_HEIGHT: int = 1000
 SCREEN_TITLE: str = "Fly-in Simulator"
 PADDING: int = 20
 BTN_W: int = 200
@@ -151,6 +151,7 @@ class Window(arcade.Window):
             SCREEN_HEIGHT,
             SCREEN_TITLE
             )
+        self.simulator = None
         self.show_view(MenuView())
 
 
@@ -238,7 +239,9 @@ class SimulationView(arcade.View):
                 getattr(arcade.color, zone.color.upper(), arcade.color.WHITE)
                 if zone.color else arcade.color.WHITE
             )
-            arcade.draw_ellipse_filled(x_pixel, y_pixel, 40, 30, color)
+            color_with_alpha = (color[0], color[1], color[2], 128)
+            arcade.draw_ellipse_filled(x_pixel, y_pixel, 40, 30,
+                                       color_with_alpha)
 
     def draw_connections(self) -> None:
 
@@ -341,7 +344,11 @@ class SimulationView(arcade.View):
             if self.current_turn < len(self.stock_turn) - 1:
                 self.current_turn += 1
             else:
-                self.simulation_finished = True
+                if self.simulation_finished:
+                    self.time_since_last_turn += delta_time
+                    if self.time_since_last_turn > 3.0:
+                        arcade.exit()
+                    return
 
     def on_key_press(self, key: int, _) -> None:
 
