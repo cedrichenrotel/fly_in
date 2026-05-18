@@ -3,10 +3,10 @@
 #                                                      :::      ::::::::    #
 #  visualizer.py                                     :+:      :+:    :+:    #
 #                                                  +:+ +:+         +:+      #
-#  By: cehenrot <cehenrot@student.42lyon.fr>     +#+  +:+       +#+         #
+#  By: cehenrot <cehenrot@student.42.fr>         +#+  +:+       +#+         #
 #                                              +#+#+#+#+#+   +#+            #
 #  Created: 2026/05/11 13:34:02 by cehenrot        #+#    #+#               #
-#  Updated: 2026/05/15 16:28:13 by cehenrot        ###   ########.fr        #
+#  Updated: 2026/05/18 11:48:07 by cehenrot        ###   ########.fr        #
 #                                                                           #
 # ************************************************************************* #
 
@@ -161,6 +161,7 @@ class SimulationView(arcade.View):
         """class designed for viewing drones"""
         super().__init__()
         self.graph = graph
+        self.sprite_list = arcade.SpriteList()
         self.stock_turn = stock_turn
         self.current_turn: int = 0
         self.turn_text: object = arcade.Text(
@@ -193,6 +194,27 @@ class SimulationView(arcade.View):
         self.target_positions: dict = {}
         self.background = arcade.load_texture("image/background.png")
         self.drone_texture = arcade.load_texture("image/drone.png")
+
+        self.drone_sprites: dict[str, arcade.Sprite] = {}
+        for i in range(1, self.graph.nb_drone + 1):
+            sprite = arcade.Sprite()
+            sprite.texture = self.drone_texture
+            sprite.scale = 0.035
+            self.drone_sprites[f"D{i}"] = sprite
+
+            x_pixel, y_pixel = self.to_pixel(
+                self.graph.start_zone.x,
+                self.graph.start_zone.y,
+                self.min_x,
+                self.min_y,
+                self.max_x,
+                self.max_y
+                )
+            sprite.center_x = x_pixel
+            sprite.center_y = y_pixel
+
+        for sprite in self.drone_sprites.values():
+            self.sprite_list.append(sprite)
 
     def to_pixel(self, x, y, min_x, min_y, max_x, max_y):
 
@@ -254,37 +276,7 @@ class SimulationView(arcade.View):
     def draw_drones(self) -> None:
 
         """display of drones on the map, turn by turn """
-        current_turn = self.stock_turn[self.current_turn]
-
-        for drone in current_turn:
-            zone_name = drone.split('-', 1)[1]
-            if '-' in zone_name:
-                name_a, name_b = zone_name.split('-')
-                zone_a = self.graph.dict_zones[name_a]
-                zone_b = self.graph.dict_zones[name_b]
-
-                target_x = (zone_a.x + zone_b.x) / 2
-                target_y = (zone_a.y + zone_b.y) / 2
-            else:
-                zone = self.graph.dict_zones[zone_name]
-                target_x = zone.x
-                target_y = zone.y
-
-            x_pixel, y_pixel = self.to_pixel(
-                target_x,
-                target_y,
-                self.min_x,
-                self.min_y,
-                self.max_x,
-                self.max_y
-                )
-
-            arcade.draw_texture_rect(self.drone_texture,
-                                     arcade.LRBT(x_pixel - 15,
-                                                 x_pixel + 15,
-                                                 y_pixel - 15,
-                                                 y_pixel + 15
-                                                 ))
+        self.sprite_list.draw()
 
     def on_draw(self) -> None:
 
@@ -303,27 +295,53 @@ class SimulationView(arcade.View):
             self.valid_text.value = "-- FINISH --"
             self.valid_text.draw()
 
-    def on_update(self, delta_time: float) -> None:
+    def on_update(self, delta_time) -> None:
 
         """The entire logic for updating the simulator.
             param delt a_time: Time elapsed since the last update
             (in seconds).
             Typically, around 1/60th of a second."""
-        self.time_since_last_turn += delta_time
+        current_turn = self.stock_turn[self.current_turn]
+        all_arrived = True
 
-        for drone_name, target_pos in self.target_positions.items():
-            current = self.drone_positions.get(drone_name, target_pos)
-            new_x = current[0] + (target_pos[0] - current[0]) * 0.1
-            new_y = current[1] + (target_pos[1] - current[1]) * 0.1
-            self.drone_positions[drone_name] = (new_x, new_y)
+        for drone in current_turn:
+            zone_name = drone.split('-', 1)[1]
+            if '-' in zone_name:
+                name_a, name_b = zone_name.split('-')
+                zone_a = self.graph.dict_zones[name_a]
+                zone_b = self.graph.dict_zones[name_b]
 
-        if self.time_since_last_turn > self.turn_speed:
+                target_x = (zone_a.x + zone_b.x) / 2
+                target_y = (zone_a.y + zone_b.y) / 2
+            else:
+                zone = self.graph.dict_zones[zone_name]
+                target_x = zone.x
+                target_y = zone.y
+
+            self.target_positions[drone.split('-', 1)[0]] = (
+                (target_x,
+                 target_y)
+                 )
+
+        for drone_name, sprite in self.drone_sprites.items():
+            if drone_name in self.target_positions:
+                target = self.target_positions[drone_name]
+                x_pixel, y_pixel = self.to_pixel(target[0],
+                                                 target[1],
+                                                 self.min_x, self.min_y,
+                                                 self.max_x, self.max_y)
+                sprite.center_x += (x_pixel - sprite.center_x) * 0.1
+                sprite.center_y += (y_pixel - sprite.center_y) * 0.1
+                distance = (((sprite.center_x - x_pixel)**2 +
+                             (sprite.center_y - y_pixel)**2) ** 0.5)
+                if distance > 2.0:
+                    all_arrived = False
+
+        if all_arrived:
             if self.current_turn < len(self.stock_turn) - 1:
                 self.current_turn += 1
-                self.time_since_last_turn = 0
             else:
                 self.simulation_finished = True
-                print(f" tour: {self.current_turn}")
 
     def on_key_press(self, key: int, _) -> None:
 
