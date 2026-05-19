@@ -6,7 +6,7 @@
 #  By: cehenrot <cehenrot@student.42.fr>         +#+  +:+       +#+         #
 #                                              +#+#+#+#+#+   +#+            #
 #  Created: 2026/04/27 17:35:52 by cehenrot        #+#    #+#               #
-#  Updated: 2026/05/18 13:26:35 by cehenrot        ###   ########.fr        #
+#  Updated: 2026/05/19 12:03:14 by cehenrot        ###   ########.fr        #
 #                                                                           #
 # ************************************************************************* #
 
@@ -28,7 +28,7 @@ class Simulator():
         self.graph = graph
         self.stock_turns: list[list[str]] = []
         self.drones_id: dict = {}
-        self.paths: dict = {}
+        self.paths: list = []
         self.trajectory: dict = {}
         self.nb_turn: int = 0
 
@@ -56,33 +56,46 @@ class Simulator():
         """assigning a single path to all drones"""
 
         algo_d = AlgoDijkstra(self.graph)
+        algo_a = AlgoAstar(self.graph)
+
         algo_d.run()
 
-        path1 = algo_d.reconstruct_path()
-
-        gate = self.graph.dict_zones[path1[1]]
-        original_type = gate.zone_type
-        gate.zone_type = ZoneType.blocked
-
-        algo_a = AlgoAstar(self.graph)
-        algo_a.run()
-
         try:
-            path2 = algo_a.reconstruct_path()
+            path1 = algo_d.reconstruct_path()
         except Exception as e:
-            print(f"failled:{e}")
-            gate.zone_type = original_type
-            for drone in self.drones_id:
-                self.paths[drone] = path1.copy()
+            print(e)
             return
 
-        gate.zone_type = original_type
+        self.paths.append(path1)
+        original_type = {}
 
-        for i, drone in enumerate(self.drones_id):
-            if i % 2 == 0:
-                self.paths[drone] = path1.copy()
+        for zone_name in path1[1:-1]:
+            zone = self.graph.dict_zones[zone_name]
+            original_type[zone_name] = zone.zone_type
+            zone.zone_type = ZoneType.restricted
+
+        algo_a.run()
+
+        path2 = None
+        try:
+            path2 = algo_a.reconstruct_path()
+        except Exception:
+            pass
+
+        if path2:
+            self.paths.append(path2)
+
+        for zone_name in path1[1:-1]:
+            zone = self.graph.dict_zones[zone_name]
+            zone.zone_type = original_type[zone_name]
+
+        for i, drone_id in enumerate(self.drones_id):
+            drone = self.drones_id[drone_id]
+
+            if len(self.paths) > 1:
+                drone.path = self.paths[i % 2]
             else:
-                self.paths[drone] = path2.copy()
+                drone.path = path1
 
     def run_drones(self) -> None:
 
@@ -102,13 +115,15 @@ class Simulator():
                 ])
 
             for drone in priority_drones + other_drones:
-
                 current_drone = self.drones_id[drone]
 
                 if current_drone.is_arrived:
                     continue
 
-                current_path = self.paths[drone]
+                if not current_drone.path:
+                    continue
+
+                current_path = current_drone.path
                 current_index = current_path.index(current_drone.
                                                    current_zone.name)
 

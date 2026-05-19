@@ -6,7 +6,7 @@
 #  By: cehenrot <cehenrot@student.42.fr>         +#+  +:+       +#+         #
 #                                              +#+#+#+#+#+   +#+            #
 #  Created: 2026/04/27 17:31:49 by cehenrot        #+#    #+#               #
-#  Updated: 2026/05/11 13:26:39 by cehenrot        ###   ########.fr        #
+#  Updated: 2026/05/19 10:09:10 by cehenrot        ###   ########.fr        #
 #                                                                           #
 # ************************************************************************* #
 
@@ -31,6 +31,7 @@ class Drone():
         self.in_transit: bool = False
         self.transit_destination: Zone | None = None
         self.transit_conn_name: str | None = None
+        self.path: list[str] = []
 
     """Check the drone's position and see if it has reached its destination"""
     def drone_move(self, zone: Zone, hub_end: Zone) -> None:

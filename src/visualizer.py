@@ -6,7 +6,7 @@
 #  By: cehenrot <cehenrot@student.42.fr>         +#+  +:+       +#+         #
 #                                              +#+#+#+#+#+   +#+            #
 #  Created: 2026/05/11 13:34:02 by cehenrot        #+#    #+#               #
-#  Updated: 2026/05/18 15:01:57 by cehenrot        ###   ########.fr        #
+#  Updated: 2026/05/19 12:49:18 by cehenrot        ###   ########.fr        #
 #                                                                           #
 # ************************************************************************* #
 
@@ -130,12 +130,15 @@ class MenuView(arcade.View):
                 px, py, _ = map_positions[map_file]
                 if abs(x - px) < 100 and abs(y - py) < 20:
                     graph = parse_file(map_file)
+
                     simulator = Simulator(graph)
+
                     simulator.init_drone()
                     simulator.init_run()
                     simulator.run_drones()
                     simulationview = SimulationView(graph,
                                                     simulator.stock_turns)
+                    self.window.simulator = simulator
                     self.window.show_view(simulationview)
 
 
@@ -344,11 +347,11 @@ class SimulationView(arcade.View):
             if self.current_turn < len(self.stock_turn) - 1:
                 self.current_turn += 1
             else:
-                if self.simulation_finished:
-                    self.time_since_last_turn += delta_time
-                    if self.time_since_last_turn > 3.0:
-                        arcade.exit()
-                    return
+                self.simulation_finished = True
+                self.time_since_last_turn += delta_time
+                if self.time_since_last_turn > 3.0:
+                    arcade.exit()
+                return
 
     def on_key_press(self, key: int, _) -> None:
 
