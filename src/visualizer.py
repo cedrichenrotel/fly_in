@@ -6,7 +6,7 @@
 #  By: cehenrot <cehenrot@student.42.fr>         +#+  +:+       +#+         #
 #                                              +#+#+#+#+#+   +#+            #
 #  Created: 2026/05/11 13:34:02 by cehenrot        #+#    #+#               #
-#  Updated: 2026/05/19 12:49:18 by cehenrot        ###   ########.fr        #
+#  Updated: 2026/05/19 15:17:01 by cehenrot        ###   ########.fr        #
 #                                                                           #
 # ************************************************************************* #
 
@@ -24,8 +24,8 @@ except ImportError as e:
     sys.exit()
 
 MARGIN: int = 50
-SCREEN_WIDTH: int = 1300
-SCREEN_HEIGHT: int = 1000
+SCREEN_WIDTH: int = 1500
+SCREEN_HEIGHT: int = 1200
 SCREEN_TITLE: str = "Fly-in Simulator"
 PADDING: int = 20
 BTN_W: int = 200
@@ -152,7 +152,7 @@ class Window(arcade.Window):
         super().__init__(
             SCREEN_WIDTH,
             SCREEN_HEIGHT,
-            SCREEN_TITLE
+            SCREEN_TITLE,
             )
         self.simulator = None
         self.show_view(MenuView())
@@ -168,6 +168,7 @@ class SimulationView(arcade.View):
         self.sprite_list = arcade.SpriteList()
         self.stock_turn = stock_turn
         self.current_turn: int = 0
+
         self.turn_text: object = arcade.Text(
             "Tour: 0",
             10,
@@ -175,7 +176,9 @@ class SimulationView(arcade.View):
             arcade.color.WHITE,
             16
             )
+
         self.simulation_finished: bool = False
+
         self.valid_text: object = arcade.Text(
             "",
             SCREEN_WIDTH // 2,
@@ -183,8 +186,9 @@ class SimulationView(arcade.View):
             arcade.color.GOLD,
             50,
             anchor_x="center",
-            anchor_y="center"
+            anchor_y="center",
             )
+
         self.min_x = min(zone.x for zone in self.graph.dict_zones.values())
         self.min_y = min(zone.y for zone in self.graph.dict_zones.values())
         self.max_x = (max(zone.x for zone in self.graph.dict_zones.values())
@@ -196,10 +200,11 @@ class SimulationView(arcade.View):
         self.turn_speed = 0.5
         self.drone_positions: dict = {}
         self.target_positions: dict = {}
+        self.drone_sprites: dict[str, arcade.Sprite] = {}
+
         self.background = arcade.load_texture("image/background.png")
         self.drone_texture = arcade.load_texture("image/drone.png")
 
-        self.drone_sprites: dict[str, arcade.Sprite] = {}
         for i in range(1, self.graph.nb_drone + 1):
             sprite = arcade.Sprite()
             sprite.texture = self.drone_texture
@@ -225,6 +230,65 @@ class SimulationView(arcade.View):
         x_pixel = MARGIN + (x - min_x) * ((SCREEN_WIDTH - 2 * MARGIN) / max_x)
         y_pixel = MARGIN + (y - min_y) * ((SCREEN_HEIGHT - 2 * MARGIN) / max_y)
         return x_pixel, y_pixel
+
+    def draw_panel(self) -> None:
+
+        arcade.draw_rect_filled(
+            arcade.XYWH(SCREEN_WIDTH//2,
+                        SCREEN_HEIGHT//2,
+                        SCREEN_WIDTH,
+                        SCREEN_HEIGHT),
+            (15, 18, 26, 255)
+        )
+
+        arcade.draw_text(
+            "SIMULATION SUMMARY", 
+            SCREEN_WIDTH // 2, 
+            SCREEN_HEIGHT - 60, 
+            arcade.color.GOLD, 
+            26, 
+            bold=True,
+            anchor_x="center"
+        )
+
+        start_x = SCREEN_WIDTH // 2 - 150
+        arcade.draw_text(f"Total Drones : {self.graph.nb_drone}", start_x, SCREEN_HEIGHT - 130, arcade.color.WHITE, 14)
+        arcade.draw_text(f"Total Rounds : {len(self.stock_turn)}", start_x, SCREEN_HEIGHT - 160, arcade.color.WHITE, 14)
+        arcade.draw_text("Status       : TERMINED !", start_x, SCREEN_HEIGHT - 190, arcade.color.GREEN, 14, bold=True)
+
+        arcade.draw_line(100, SCREEN_HEIGHT - 220, SCREEN_WIDTH - 100, SCREEN_HEIGHT - 220, arcade.color.GOLD, 2)
+        
+        arcade.draw_text(
+            "FINAL TRAJECTORY LOGS", 
+            SCREEN_WIDTH // 2, 
+            SCREEN_HEIGHT - 260, 
+            arcade.color.GOLD, 
+            16, 
+            bold=True,
+            anchor_x="center"
+        )
+
+        # 3. Affichage intelligent des logs
+        # Vu que l'écran est super large, si le texte d'un tour n'est pas trop long,
+        # on peut afficher beaucoup de lignes. Sinon, on garde une marge propre.
+        start_log = max(0, len(self.stock_turn) - 22)  # Environ 22 lignes max verticalement
+        y_pos = SCREEN_HEIGHT - 310
+
+        for turn_index in range(start_log, len(self.stock_turn)):
+            turn_data = ' '.join(self.stock_turn[turn_index])
+            prefix = f"[{turn_index}] "
+            
+            # Avec tout l'écran, on a de la place ! On peut afficher jusqu'à 130 caractères par ligne
+            short_text = turn_data if len(turn_data) < 130 else turn_data[:127] + "..."
+
+            arcade.draw_text(
+                f"{prefix}{short_text}",
+                120,  # Jolie marge de 120 pixels à gauche de l'écran
+                y_pos,
+                arcade.color.LIGHT_GRAY,
+                11
+            )
+            y_pos -= 26
 
     def draw_zones(self) -> None:
 
@@ -291,15 +355,15 @@ class SimulationView(arcade.View):
         arcade.draw_texture_rect(self.background,
                                  arcade.LRBT(0, SCREEN_WIDTH, 0, SCREEN_HEIGHT)
                                  )
-        self.turn_text.value = f"tour: {self.current_turn}"
-        self.turn_text.draw()
         self.draw_connections()
         self.draw_zones()
         self.draw_drones()
 
         if self.simulation_finished is True:
+
             self.valid_text.value = "-- FINISH --"
             self.valid_text.draw()
+            self.draw_panel()
 
     def on_update(self, delta_time) -> None:
 
@@ -349,7 +413,7 @@ class SimulationView(arcade.View):
             else:
                 self.simulation_finished = True
                 self.time_since_last_turn += delta_time
-                if self.time_since_last_turn > 3.0:
+                if self.time_since_last_turn > 30.0:
                     arcade.exit()
                 return
 
