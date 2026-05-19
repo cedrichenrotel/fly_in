@@ -3,10 +3,10 @@
 #                                                      :::      ::::::::    #
 #  simulator.py                                      :+:      :+:    :+:    #
 #                                                  +:+ +:+         +:+      #
-#  By: cehenrot <cehenrot@student.42.fr>         +#+  +:+       +#+         #
+#  By: cehenrot <cehenrot@student.42lyon.fr>     +#+  +:+       +#+         #
 #                                              +#+#+#+#+#+   +#+            #
 #  Created: 2026/04/27 17:35:52 by cehenrot        #+#    #+#               #
-#  Updated: 2026/05/19 12:03:14 by cehenrot        ###   ########.fr        #
+#  Updated: 2026/05/19 18:47:47 by cehenrot        ###   ########.fr        #
 #                                                                           #
 # ************************************************************************* #
 

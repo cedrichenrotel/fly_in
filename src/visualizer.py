@@ -3,10 +3,10 @@
 #                                                      :::      ::::::::    #
 #  visualizer.py                                     :+:      :+:    :+:    #
 #                                                  +:+ +:+         +:+      #
-#  By: cehenrot <cehenrot@student.42.fr>         +#+  +:+       +#+         #
+#  By: cehenrot <cehenrot@student.42lyon.fr>     +#+  +:+       +#+         #
 #                                              +#+#+#+#+#+   +#+            #
 #  Created: 2026/05/11 13:34:02 by cehenrot        #+#    #+#               #
-#  Updated: 2026/05/19 15:17:01 by cehenrot        ###   ########.fr        #
+#  Updated: 2026/05/19 18:09:32 by cehenrot        ###   ########.fr        #
 #                                                                           #
 # ************************************************************************* #
 
@@ -242,44 +242,65 @@ class SimulationView(arcade.View):
         )
 
         arcade.draw_text(
-            "SIMULATION SUMMARY", 
-            SCREEN_WIDTH // 2, 
-            SCREEN_HEIGHT - 60, 
-            arcade.color.GOLD, 
-            26, 
+            "SIMULATION SUMMARY",
+            SCREEN_WIDTH // 2,
+            SCREEN_HEIGHT - 60,
+            arcade.color.GOLD,
+            26,
             bold=True,
             anchor_x="center"
         )
 
         start_x = SCREEN_WIDTH // 2 - 150
-        arcade.draw_text(f"Total Drones : {self.graph.nb_drone}", start_x, SCREEN_HEIGHT - 130, arcade.color.WHITE, 14)
-        arcade.draw_text(f"Total Rounds : {len(self.stock_turn)}", start_x, SCREEN_HEIGHT - 160, arcade.color.WHITE, 14)
-        arcade.draw_text("Status       : TERMINED !", start_x, SCREEN_HEIGHT - 190, arcade.color.GREEN, 14, bold=True)
-
-        arcade.draw_line(100, SCREEN_HEIGHT - 220, SCREEN_WIDTH - 100, SCREEN_HEIGHT - 220, arcade.color.GOLD, 2)
-        
         arcade.draw_text(
-            "FINAL TRAJECTORY LOGS", 
-            SCREEN_WIDTH // 2, 
-            SCREEN_HEIGHT - 260, 
-            arcade.color.GOLD, 
-            16, 
+            f"Total Drones : {self.graph.nb_drone}",
+            start_x, SCREEN_HEIGHT - 130,
+            arcade.color.WHITE,
+            14
+            )
+        arcade.draw_text(
+            f"Total Rounds : {len(self.stock_turn)}",
+            start_x,
+            SCREEN_HEIGHT - 160,
+            arcade.color.WHITE,
+            14
+            )
+        arcade.draw_text(
+            "Status       : TERMINED !",
+            start_x,
+            SCREEN_HEIGHT - 190,
+            arcade.color.GREEN,
+            14,
+            bold=True
+            )
+        arcade.draw_line(
+            100,
+            SCREEN_HEIGHT - 220,
+            SCREEN_WIDTH - 100,
+            SCREEN_HEIGHT - 220,
+            arcade.color.GOLD,
+            2
+            )
+        arcade.draw_text(
+            "FINAL TRAJECTORY LOGS",
+            SCREEN_WIDTH // 2,
+            SCREEN_HEIGHT - 260,
+            arcade.color.GOLD,
+            16,
             bold=True,
             anchor_x="center"
         )
 
-        # 3. Affichage intelligent des logs
-        # Vu que l'écran est super large, si le texte d'un tour n'est pas trop long,
-        # on peut afficher beaucoup de lignes. Sinon, on garde une marge propre.
-        start_log = max(0, len(self.stock_turn) - 22)  # Environ 22 lignes max verticalement
+        start_log = max(0, len(self.stock_turn) - 22)
         y_pos = SCREEN_HEIGHT - 310
 
         for turn_index in range(start_log, len(self.stock_turn)):
             turn_data = ' '.join(self.stock_turn[turn_index])
             prefix = f"[{turn_index}] "
-            
-            # Avec tout l'écran, on a de la place ! On peut afficher jusqu'à 130 caractères par ligne
-            short_text = turn_data if len(turn_data) < 130 else turn_data[:127] + "..."
+
+            short_text = (turn_data
+                          if len(turn_data) < 130
+                          else turn_data[:127] + "...")
 
             arcade.draw_text(
                 f"{prefix}{short_text}",
