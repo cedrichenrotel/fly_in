@@ -6,7 +6,7 @@
 #  By: cehenrot <cehenrot@student.42.fr>         +#+  +:+       +#+         #
 #                                              +#+#+#+#+#+   +#+            #
 #  Created: 2026/04/30 14:27:33 by cehenrot        #+#    #+#               #
-#  Updated: 2026/05/11 13:26:25 by cehenrot        ###   ########.fr        #
+#  Updated: 2026/05/20 14:51:47 by cehenrot        ###   ########.fr        #
 #                                                                           #
 # ************************************************************************* #
 
@@ -37,9 +37,13 @@ class Algo(ABC):
     def run(self) -> None:
         pass
 
-    def reconstruct_path(self) -> list[str]:
-        if self.graph.end_zone is None:
-            raise Exception("Destination (end_zone) non définie.")
+    def reconstruct_path(self, start_zone=None) -> list[str]:
+
+        expected_start = (
+            start_zone.name
+            if start_zone
+            else self.graph.start_zone.name
+            )
 
         path: List[str] = []
         current: Optional[str] = self.graph.end_zone.name
@@ -50,7 +54,7 @@ class Algo(ABC):
 
         path.reverse()
 
-        if path[0] != self.graph.start_zone.name:
+        if path[0] != expected_start:
             raise Exception("No valid path found")
 
         return path
@@ -110,14 +114,16 @@ class AlgoAstar(Algo):
     """A* prioritises areas that have:
         A low cost from the start AND a short estimated distance to
         the destination"""
+    def __init__(self, graph: Graph,
+                 distances_from_goal: Dict[str, int]) -> None:
+        super().__init__(graph)
+        self.distances_from_goal = distances_from_goal
+
     def heuristic(self, zone_name: str) -> int:
-        if self.graph.end_zone is None:
+        if self.distances_from_goal is None:
             raise Exception("class AlgoAstar: end_zone not defined")
 
-        z_a = self.graph.dict_zones[zone_name]
-        z_b = self.graph.end_zone
-
-        return abs(z_a.x - z_b.x) + abs(z_a.y - z_b.y)
+        return self.distances_from_goal(zone_name, 0)
 
     def initialize(self) -> None:
         self.distances = {vertex: sys.maxsize for vertex in
@@ -135,7 +141,10 @@ class AlgoAstar(Algo):
 
         heapq.heappush(self.heap, (start_heuristic, 0, self.start.name))
 
-    def run(self) -> None:
+    def run(self, blocked_zones: Optional[set] = None) -> None:
+        if blocked_zones is None:
+            blocked_zones = set()
+
         self.initialize()
 
         while self.heap:
@@ -152,8 +161,8 @@ class AlgoAstar(Algo):
                 else:
                     new_neighbor = neighbor.zone_a
 
-                new_cost = current_cost + new_neighbor.zone_type.cost()
-
+                penalty = 999 if new_neighbor.name in blocked_zones else 0
+                new_cost = current_cost + new_neighbor.zone_type.cost() + penalty
                 """course update"""
                 if new_cost < self.distances[new_neighbor.name]:
                     self.distances[new_neighbor.name] = new_cost

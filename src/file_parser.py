@@ -6,7 +6,7 @@
 #  By: cehenrot <cehenrot@student.42.fr>         +#+  +:+       +#+         #
 #                                              +#+#+#+#+#+   +#+            #
 #  Created: 2026/04/27 15:02:34 by cehenrot        #+#    #+#               #
-#  Updated: 2026/05/11 13:26:54 by cehenrot        ###   ########.fr        #
+#  Updated: 2026/05/20 09:08:22 by cehenrot        ###   ########.fr        #
 #                                                                           #
 # ************************************************************************* #
 
@@ -143,7 +143,11 @@ def parse_file(file: str) -> Graph:
                 if len(info) > 2:
                     try:
                         key, value = info[2].split("=")
-                        if key == 'max_link_capacity':
+                        if (
+                            key == 'max_link_capacity' or
+                            key == 'max_drones_capacity'
+                        ):
+
                             max_link_capacity = int(value)
                             if max_link_capacity <= 0:
                                 raise Exception(f"max_link_capacity <= 0, "
@@ -151,8 +155,12 @@ def parse_file(file: str) -> Graph:
                     except ValueError as e:
                         raise Exception(f"Max_link_capacity is not value, "
                                         f"value: {e}")
-                connection = Connection(obj_zone_a, obj_zone_b,
-                                        max_link_capacity)
+                connection = Connection(
+                    obj_zone_a,
+                    obj_zone_b,
+                    _,
+                    max_link_capacity
+                    )
 
                 graph.add_adjacency(connection)
 

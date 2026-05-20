@@ -6,7 +6,7 @@
 #  By: cehenrot <cehenrot@student.42.fr>         +#+  +:+       +#+         #
 #                                              +#+#+#+#+#+   +#+            #
 #  Created: 2026/04/27 17:31:49 by cehenrot        #+#    #+#               #
-#  Updated: 2026/05/19 10:09:10 by cehenrot        ###   ########.fr        #
+#  Updated: 2026/05/20 14:36:03 by cehenrot        ###   ########.fr        #
 #                                                                           #
 # ************************************************************************* #
 
@@ -38,5 +38,3 @@ class Drone():
         self.current_zone = zone
         if self.current_zone.name == hub_end.name:
             self.is_arrived = True
-        else:
-            self.is_arrived = False
