@@ -3,10 +3,10 @@
 #                                                      :::      ::::::::    #
 #  simulator.py                                      :+:      :+:    :+:    #
 #                                                  +:+ +:+         +:+      #
-#  By: cehenrot <cehenrot@student.42.fr>         +#+  +:+       +#+         #
+#  By: cehenrot <cehenrot@student.42lyon.fr>     +#+  +:+       +#+         #
 #                                              +#+#+#+#+#+   +#+            #
 #  Created: 2026/04/27 17:35:52 by cehenrot        #+#    #+#               #
-#  Updated: 2026/05/20 14:48:18 by cehenrot        ###   ########.fr        #
+#  Updated: 2026/05/20 17:51:52 by cehenrot        ###   ########.fr        #
 #                                                                           #
 # ************************************************************************* #
 
@@ -35,18 +35,13 @@ class Simulator():
 
     def init_drone(self) -> None:
         """init_drone: creates all drones in the start_zone"""
-
         nb_drone = self.graph.nb_drone
-
         if nb_drone is None:
-            raise ValueError("The starting point of the graph has not been "
-                             "set.")
+            raise ValueError("The starting point of the graph has not been set.")
 
         start_zone = self.graph.start_zone
-
         if start_zone is None:
-            raise ValueError("Simulator -> start_zone is None; unable to "
-                             "initialise the drones")
+            raise ValueError("Simulator -> start_zone is None; unable to initialise the drones")
 
         for n in range(1, nb_drone + 1):
             self.trajectory[f'D{n}'] = []
@@ -54,14 +49,14 @@ class Simulator():
             start_zone.current_drones += 1
 
     def init_run(self) -> None:
-
-        """assigning a single path to all drones"""
+        """assigning a perfectly weighted base path and tracking distances"""
+        # Pré-calcul parfait des distances depuis l'objectif vers chaque nœud
         algo_dijkstra = AlgoDijkstra(self.graph)
         algo_dijkstra.start = self.graph.end_zone
         algo_dijkstra.run()
-
         self.distances_from_goal = algo_dijkstra.distances
 
+        # Premier calcul du chemin optimal global
         algo_a = AlgoAstar(self.graph, self.distances_from_goal)
         algo_a.run()
         base_path = algo_a.reconstruct_path()
@@ -70,23 +65,22 @@ class Simulator():
             drone.path = list(base_path)
 
     def run_drones(self) -> None:
-
-        """run_drones — loops through each turn and moves each drone"""
+        """run_drones — optimized loop to clear bottlenecks instantly"""
         while not all(drone.is_arrived for drone in self.drones_id.values()):
 
             moves: list[tuple] = []
-            priority_drones = ([
-                d for d in self.drones_id
-                if self.drones_id[d].current_zone.zone_type ==
-                ZoneType.priority
-                ])
-            other_drones = ([
-                d for d in self.drones_id
-                if self.drones_id[d].current_zone.zone_type !=
-                ZoneType.priority
-                ])
+            
+            # OPTIMISATION FLUX : On trie en priorité absolue les drones proches de l'arrivée 
+            # ou dans des zones prioritaires pour libérer l'espace devant (Aspiration du trafic)
+            sorted_drones = sorted(
+                self.drones_id.keys(),
+                key=lambda d: (
+                    0 if self.drones_id[d].current_zone.zone_type == ZoneType.priority else 1,
+                    self.distances_from_goal.get(self.drones_id[d].current_zone.name, 999)
+                )
+            )
 
-            for drone in priority_drones + other_drones:
+            for drone in sorted_drones:
                 current_drone = self.drones_id[drone]
 
                 if current_drone.is_arrived:
@@ -94,96 +88,72 @@ class Simulator():
 
                 if current_drone.in_transit:
                     current_drone.in_transit = False
-
                     moves.append((
-                            drone, current_drone.current_zone,
-                            current_drone.transit_destination,
-                            current_drone.transit_conn_name
-                            ))
-
+                        drone, current_drone.current_zone,
+                        current_drone.transit_destination,
+                        current_drone.transit_conn_name
+                    ))
                     current_drone.transit_destination = None
                     continue
 
                 current_path = current_drone.path
-                current_index = current_path.index(current_drone.
-                                                   current_zone.name)
+                current_index = current_path.index(current_drone.current_zone.name)
 
                 old_zone = current_drone.current_zone
                 next_path = current_path[current_index + 1]
                 next_zone = self.graph.dict_zones[next_path]
-                connection = self.graph.get_neighbors(current_drone.
-                                                      current_zone)
+                connection = self.graph.get_neighbors(current_drone.current_zone)
 
+                moved = False
                 for conn in connection:
                     if conn.zone_a == next_zone or conn.zone_b == next_zone:
                         
-                        # Drones qui ont déjà prévu de venir dans la zone au cours de ce tour
-                        nb_drones_entry = len([
-                            m for m in moves if m[2] == next_zone
-                        ])
+                        nb_drones_entry = len([m for m in moves if m[2] == next_zone])
+                        nb_drones_exit = len([m for m in moves if m[1] == next_zone])
+                        nb_current_drone = next_zone.current_drones + nb_drones_entry - nb_drones_exit
 
-                        # Drones qui ont prévu de partir de cette zone au cours de ce tour
-                        nb_drones_exit = len([
-                            m for m in moves if m[1] == next_zone
-                        ])
-
-                        # CALCUL CORRIGÉ : Actuels + Entrées - Sorties
-                        nb_current_drone = (
-                            next_zone.current_drones + nb_drones_entry - nb_drones_exit
-                        )
-
-                        # Vérification des contraintes de la zone et de la liaison
                         if (next_zone.zone_type != ZoneType.blocked and
-                            len([m for m in moves
-                                 if m[1] == old_zone and
-                                 m[2] == next_zone]) < conn.max_link_capacity
-                                and
-                                nb_current_drone < next_zone.max_drones):
+                            len([m for m in moves if m[1] == old_zone and m[2] == next_zone]) < conn.max_link_capacity and
+                            nb_current_drone < next_zone.max_drones):
 
                             if next_zone.zone_type == ZoneType.restricted:
                                 current_drone.in_transit = True
                                 current_drone.transit_destination = next_zone
-                                # Sauvegarde indispensable du nom de la connexion pour le tour d'après !
                                 current_drone.transit_conn_name = conn.name
-                                
-                                moves.append((
-                                    drone, old_zone, next_zone, conn.name
-                                ))
+                                moves.append((drone, old_zone, next_zone, conn.name))
                             else:
-                                moves.append((
-                                    drone, old_zone, next_zone, None
-                                ))
+                                moves.append((drone, old_zone, next_zone, None))
+                            moved = True
                             break
-                else:
+                
+                # --- REPLANIFICATION AGRESSIVE (Si le drone de tête est bloqué) ---
+                if not moved:
                     blocked_zones = set()
                     for z_name, zone in self.graph.dict_zones.items():
-                        if zone.current_drones >= zone.max_drones:
+                        # On considère une zone bloquée uniquement si elle est AU MAXIMUM de sa capacité ce tour-ci
+                        # et qu'aucun drone ne la quitte.
+                        nb_entry = len([m for m in moves if m[2] == zone])
+                        nb_exit = len([m for m in moves if m[1] == zone])
+                        if (zone.current_drones + nb_entry - nb_exit) >= zone.max_drones:
                             blocked_zones.add(z_name)
 
-                    algo_a = AlgoAstar(self.graph,
-                                       self.distances_from_goal)
+                    algo_a = AlgoAstar(self.graph, self.distances_from_goal)
                     algo_a.start = current_drone.current_zone
-
                     algo_a.run(blocked_zones=blocked_zones)
 
                     try:
-                        new_path = algo_a.reconstruct_path(
-                            start_zone=current_drone.current_zone
-                        )
+                        new_path = algo_a.reconstruct_path(start_zone=current_drone.current_zone)
                         current_drone.path = new_path
                         
-                        # --- OPTIMISATION FLUIDITÉ ---
-                        # On met à jour directement sa prochaine cible avec son nouveau chemin
-                        next_path = new_path[1] # L'index 0 est sa position actuelle, l'index 1 est sa nouvelle cible
+                        next_path = new_path[1]
                         next_zone = self.graph.dict_zones[next_path]
                         
-                        # On lui donne une chance de s'engager tout de suite sur cette nouvelle voie libre !
+                        # Tentative d'engagement immédiat dans la déviation pour gagner 1 tour précieux
                         for conn in connection:
                             if conn.zone_a == next_zone or conn.zone_b == next_zone:
-                                # (On refait la même validation rapide de sécurité)
-                                nb_drones_entry = len([m for m in moves if m[2] == next_zone])
-                                nb_drones_exit = len([m for m in moves if m[1] == next_zone])
-                                nb_current_drone = next_zone.current_drones + nb_drones_entry - nb_drones_exit
+                                nb_entry = len([m for m in moves if m[2] == next_zone])
+                                nb_exit = len([m for m in moves if m[1] == next_zone])
+                                nb_current_drone = next_zone.current_drones + nb_entry - nb_exit
                                 
                                 if (next_zone.zone_type != ZoneType.blocked and
                                     len([m for m in moves if m[1] == old_zone and m[2] == next_zone]) < conn.max_link_capacity and
@@ -198,18 +168,17 @@ class Simulator():
                                         moves.append((drone, old_zone, next_zone, None))
                                     break
                     except Exception:
-                        pass #
+                        pass
 
             for (drone, old_zone, next_zone, _) in moves:
                 old_zone.current_drones -= 1
-                self.drones_id[drone].drone_move(next_zone,
-                                                 self.graph.end_zone)
+                self.drones_id[drone].drone_move(next_zone, self.graph.end_zone)
                 next_zone.current_drones += 1
                 self.trajectory[drone].append(next_zone.name)
 
             self.stock_turns.append([
                 f"{drone}-{conn_name if conn_name else next_zone.name}"
                 for (drone, _, next_zone, conn_name) in moves
-                ])
+            ])
 
             self.nb_turn += 1

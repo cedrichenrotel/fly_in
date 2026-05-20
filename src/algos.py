@@ -3,10 +3,10 @@
 #                                                      :::      ::::::::    #
 #  algos.py                                          :+:      :+:    :+:    #
 #                                                  +:+ +:+         +:+      #
-#  By: cehenrot <cehenrot@student.42.fr>         +#+  +:+       +#+         #
+#  By: cehenrot <cehenrot@student.42lyon.fr>     +#+  +:+       +#+         #
 #                                              +#+#+#+#+#+   +#+            #
 #  Created: 2026/04/30 14:27:33 by cehenrot        #+#    #+#               #
-#  Updated: 2026/05/20 14:51:47 by cehenrot        ###   ########.fr        #
+#  Updated: 2026/05/20 17:52:12 by cehenrot        ###   ########.fr        #
 #                                                                           #
 # ************************************************************************* #
 
@@ -123,7 +123,7 @@ class AlgoAstar(Algo):
         if self.distances_from_goal is None:
             raise Exception("class AlgoAstar: end_zone not defined")
 
-        return self.distances_from_goal(zone_name, 0)
+        return self.distances_from_goal.get(zone_name, 0)
 
     def initialize(self) -> None:
         self.distances = {vertex: sys.maxsize for vertex in
