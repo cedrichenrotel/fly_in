@@ -3,16 +3,16 @@
 #                                                      :::      ::::::::    #
 #  algos.py                                          :+:      :+:    :+:    #
 #                                                  +:+ +:+         +:+      #
-#  By: cehenrot <cehenrot@student.42lyon.fr>     +#+  +:+       +#+         #
+#  By: cehenrot <cehenrot@student.42.fr>         +#+  +:+       +#+         #
 #                                              +#+#+#+#+#+   +#+            #
 #  Created: 2026/04/30 14:27:33 by cehenrot        #+#    #+#               #
-#  Updated: 2026/05/20 17:52:12 by cehenrot        ###   ########.fr        #
+#  Updated: 2026/05/21 09:00:29 by cehenrot        ###   ########.fr        #
 #                                                                           #
 # ************************************************************************* #
 
 import sys
 from abc import ABC, abstractmethod
-from typing import List, Dict, Optional, Tuple
+from typing import List, Dict, Optional, Tuple, Set
 
 try:
     from graph import Graph
@@ -110,10 +110,11 @@ class AlgoDijkstra(Algo):
 
 
 class AlgoAstar(Algo):
-
-    """A* prioritises areas that have:
-        A low cost from the start AND a short estimated distance to
-        the destination"""
+    """
+    A* adapted for spacetime.
+    Finds an optimal path by avoiding future collisions using a
+    global reservation table.
+    """
     def __init__(self, graph: Graph,
                  distances_from_goal: Dict[str, int]) -> None:
         super().__init__(graph)
@@ -122,51 +123,89 @@ class AlgoAstar(Algo):
     def heuristic(self, zone_name: str) -> int:
         if self.distances_from_goal is None:
             raise Exception("class AlgoAstar: end_zone not defined")
-
         return self.distances_from_goal.get(zone_name, 0)
 
     def initialize(self) -> None:
-        self.distances = {vertex: sys.maxsize for vertex in
-                          self.graph.dict_zones}
+        # Les distances sont désormais indexées par (zone_name, turn)
+        self.dict_distances: Dict[Tuple[str, int], int] = {}
+        self.dict_predecessors: Dict[Tuple[str, int], Optional[Tuple[str, int]]] = {}
+        self.heap: List[Tuple[int, int, str, int]] = []
 
-        if self.start is None:
-            raise Exception("algo_astar -> The starting point has not been"
-                            " defined.")
-
-        start_heuristic = self.heuristic(self.start.name)
-
-        self.distances[self.start.name] = 0
-        self.predecessors = {vertex: None for vertex in self.graph.dict_zones}
-        self.heap: List[Tuple[int, int, str]] = []
-
-        heapq.heappush(self.heap, (start_heuristic, 0, self.start.name))
-
-    def run(self, blocked_zones: Optional[set] = None) -> None:
-        if blocked_zones is None:
-            blocked_zones = set()
+    def run(self, space_time_reservation: Optional[dict] = None) -> None:
+        """
+        Calcule le chemin le plus rapide en tenant compte de l'occupation
+        des zones et des connexions au tour par tour.
+        """
+        if space_time_reservation is None:
+            space_time_reservation = {}
 
         self.initialize()
+        
+        start_name = self.start.name
+        start_heuristic = self.heuristic(start_name)
+        self.dict_distances[(start_name, 0)] = 0
+        self.dict_predecessors[(start_name, 0)] = None
+        
+        # Structure du tas : (priorité, coût_réel, nom_zone, tour_actuel)
+        heapq.heappush(self.heap, (start_heuristic, 0, start_name, 0))
+        visited: Set[Tuple[str, int]] = set()
 
         while self.heap:
-            _, current_cost, zone = heapq.heappop(self.heap)
+            _, current_cost, zone, turn = heapq.heappop(self.heap)
 
-            if current_cost > self.distances[zone]:
+            if zone == self.graph.end_zone.name:
+                # On sauvegarde le point d'arrivée pour la reconstruction
+                self.end_node = (zone, turn)
+                return
+
+            if (zone, turn) in visited:
                 continue
+            visited.add((zone, turn))
 
-            for neighbor in self.graph.get_neighbors(self.graph.
-                                                     dict_zones[zone]):
+            is_start_or_end: str = (zone == self.graph.start_zone.name or
+                               zone == self.graph.end_zone.name)
+            zone_obj = self.graph.dict_zones[zone]
+            
+            if is_start_or_end or space_time_reservation.get((zone, turn + 1), 0) < zone_obj.max_drones:
+                wait_node = (zone, turn + 1)
+                if current_cost + 1 < self.dict_distances.get(wait_node, sys.maxsize):
+                    self.dict_distances[wait_node] = current_cost + 1
+                    self.dict_predecessors[wait_node] = (zone, turn)
+                    priority = current_cost + 1 + self.heuristic(zone)
+                    heapq.heappush(self.heap, (priority, current_cost + 1, zone, turn + 1))
 
-                if zone == neighbor.zone_a.name:
-                    new_neighbor = neighbor.zone_b
-                else:
-                    new_neighbor = neighbor.zone_a
+            # Option 2 : Déplacement vers les voisins
+            for neighbor in self.graph.get_neighbors(self.graph.dict_zones[zone]):
+                new_neighbor = neighbor.zone_b if zone == neighbor.zone_a.name else neighbor.zone_a
+                
+                if new_neighbor.zone_type.name == "BLOCKED":
+                    continue
 
-                penalty = 999 if new_neighbor.name in blocked_zones else 0
-                new_cost = current_cost + new_neighbor.zone_type.cost() + penalty
-                """course update"""
-                if new_cost < self.distances[new_neighbor.name]:
-                    self.distances[new_neighbor.name] = new_cost
-                    self.predecessors[new_neighbor.name] = zone
-                    new_priority = new_cost + self.heuristic(new_neighbor.name)
-                    heapq.heappush(self.heap, (new_priority, new_cost,
-                                               new_neighbor.name))
+                cost = new_neighbor.zone_type.cost()
+                arrival_turn = turn + cost
+                neighbor_node = (new_neighbor.name, arrival_turn)
+
+                # Vérification de la capacité de la zone d'arrivée au tour cible
+                is_neighbor_end = (new_neighbor.name == self.graph.end_zone.name)
+                current_occupancy = space_time_reservation.get(neighbor_node, 0)
+                
+                if is_neighbor_end or current_occupancy < new_neighbor.max_drones:
+                    if current_cost + cost < self.dict_distances.get(neighbor_node, sys.maxsize):
+                        self.dict_distances[neighbor_node] = current_cost + cost
+                        self.dict_predecessors[neighbor_node] = (zone, turn)
+                        
+                        priority_bonus = -1 if new_neighbor.zone_type.name == "PRIORITY" else 0
+                        priority = current_cost + cost + self.heuristic(new_neighbor.name) + priority_bonus
+                        heapq.heappush(self.heap, (priority, current_cost + cost, new_neighbor.name, arrival_turn))
+
+    def get_reconstructed_path(self) -> List[Tuple[str, int]]:
+        """Reconstruit le chemin sous forme de couples (zone, tour)."""
+        path: List[Tuple[str, int]] = []
+        current: Optional[Tuple[str, int]] = getattr(self, "end_node", None)
+
+        while current is not None:
+            path.append(current)
+            current = self.dict_predecessors.get(current)
+
+        path.reverse()
+        return path
