@@ -1,96 +1,145 @@
+# Fly-in
 
-logique de resoltuion.
+*This project has been created as part of the 42 curriculum by cehenrot.*
 
-SIMULATOR.PY
+---
 
-Logic de résolution : init_drone
-Cette méthode a pour but de préparer physiquement la simulation : elle crée les drones un par un et les positionne tous sur la ligne de départ de la carte avant que le moindre calcul d'A* ne commence.
+## Description
 
-1. Vérifications de sécurité (Guard Rails)
-Avant de lancer la création, le code vérifie que la carte possède bien toutes les informations nécessaires :
+**Fly-in** is a drone routing simulation system written in Python. The goal is to move an entire fleet of drones from a start zone to an end zone in the fewest possible simulation turns, while respecting strict movement, capacity, and zone-type constraints.
 
-On récupère le nombre total de drones prévus pour la map dans une variable nb_drone. Si cette variable est vide (None), le programme lève une erreur (ValueError) pour éviter de planter plus tard.
+The simulation operates on a graph of connected zones, each with its own type (normal, restricted, priority, blocked), capacity, and color. Drones navigate this graph turn by turn, and the system must schedule their paths to avoid conflicts, deadlocks, and capacity violations.
 
-On récupère la zone de départ du graphe dans start_zone. Si elle n'est pas définie, le programme s'arrête également avec une erreur car on ne saurait pas où placer les drones.
+The project includes:
+- A file parser for custom map formats
+- A pathfinding engine combining Dijkstra and A* algorithms
+- A spatio-temporal reservation system to coordinate multiple drones
+- A graphical interface built with the `arcade` library
 
-2. La boucle de création : for n in range(1, nb_drone + 1):
-On lance une boucle qui va itérer de 1 jusqu'au nombre total de drones (par exemple de 1 à 25). À chaque tour, elle effectue trois actions cruciales pour le drone numéro n :
+---
 
-self.trajectory[f'D{n}'] = [] : On initialise une liste vide dans le dictionnaire des trajectoires réelles pour ce drone (ex: 'D1'). C'est ici que le simulateur enregistrera l'historique de ses vraies positions physiques au fur et à mesure de la course.
+## Project Structure
 
-self.drones_id[f"D{n}"] = Drone(f"D{n}", start_zone) : C'est l'instanciation. On crée le véritable objet Drone en lui donnant son identifiant textuel (ex: "D1") et sa zone de départ (start_zone). On stocke cet objet dans le dictionnaire central self.drones_id (celui que l'A* utilisera juste après dans init_run).
+The project is fully object-oriented. Each file is organized around one or more classes with a single responsibility:
 
-start_zone.current_drones += 1 : On incrémente le compteur de drones présents physiquement sur la case de départ. Si on a 25 drones, à la fin de la boucle, la zone "start" saura qu'elle contient exactement 25 drones à l'état initial.
+| File | Role |
+|------|------|
+| `zone.py` | Defines the `Zone` class and the `ZoneType` enum. Contains all the data needed to represent a zone: name, coordinates, type (normal, restricted, priority, blocked), color, and drone capacity. |
+| `connection.py` | Defines the `Connection` class, which represents a bidirectional link between two zones, including its maximum drone capacity. |
+| `drone.py` | Defines the `Drone` class. Each drone has an ID, a current zone, and a pre-computed path (timeline) assigned before the simulation starts. |
+| `graph.py` | Defines the `Graph` class, which ties zones and connections together into a navigable map. It stores the adjacency list and provides neighbor lookup. |
+| `algos.py` | Contains the pathfinding algorithms. An abstract base class `Algo` enforces a common interface, with two concrete implementations: `AlgoDijkstra` and `AlgoAstar`. This file is a practical application of object-oriented design using abstract classes and inheritance. |
+| `file_parser.py` | Parses the input map file and builds a `Graph` object. Acts as a security layer: it validates all input data (zone names, coordinates, types, capacities) and raises explicit errors on any malformed input to prevent runtime crashes. |
+| `simulator.py` | Orchestrates the full simulation. Uses the algorithms on the graph with the drones: pre-computes heuristics, runs spatio-temporal A* for each drone, builds their timelines, and generates the turn-by-turn output. |
+| `visualizer.py` | Handles the graphical interface using the `arcade` library. Provides a menu to select maps by difficulty and animates the simulation with drone sprites moving across the graph in real time. |
+| `main.py` | Entry point of the program. Creates the window and prints the final simulation output to the terminal. |
 
-init_run:
-dans la methode init_run fichier simulator.py je creer une boucle for pour calculer le chemin avec l algorythme astar de chaque drone 1 par 1.
+---
 
-![alt text](image.png)
-2- J'incremente une autre boucle for dans la precedente qui permettra de stocker dans space_time_reservation[(zone_name, turn)], dans qu elle zone sera le drone a x tour.
+## Instructions
 
-3-On stock dans une variable (max_turn: int) pour connaitre le nombre de tour aue doit faire pour arriver à destination.
-Pour ce faire : max_turn = st_path[-1][1] -> [-1] Correspond au dernier élément du tableau
-                                              [1] Correspond au deuxieme element, c'est-à-dire le numéro du tour. Ici, c'est 43.
-![alt text](image-1.png)
+### Requirements
 
-Mais aussi une autre variable (timeline: List[str]):
-timeline: List[str] = [self.graph.start_zone.name] * (max_turn + 1) : Créer l'agenda vide
-self.graph.start_zone.name : C'est le nom de ta case de départ (la chaîne de caractères "start").
+- Python 3.10 or later
+- `arcade` library (and other dependencies listed in `requirements.txt`)
 
-[...] * (max_turn + 1) : En Python, multiplier une liste par un nombre va dupliquer son contenu. Si max_turn vaut 43, on fait 43 + 1 = 44. On crée donc une liste contenant 44 fois le mot "start".
+### Installation
 
-À quoi ça sert ? Cela crée un tableau qui ressemble à ça :
-["start", "start", "start", "start", ... (44 fois) ...]
+```bash
+make install
+```
 
-Cette liste preremplie à la taille de max_turn + 1 qui servira a stocker tous les noms de zone dans lequelle le drone sera passer.
+This creates a virtual environment and installs all dependencies.
 
-3- for i in range(len(st_path) - 1):
-                z_curr, t_curr = st_path[i]
-                z_next, t_next = st_path[i + 1]
+### Run
 
-                for t in range(t_curr, t_next):
-                    if (t_next - t_curr) == 2 and t == t_curr:
-                        conn_name = ""
-                        for conn in self.graph.get_neighbors(self.graph.dict_zones[z_curr]):
-                            if conn.zone_a.name == z_next or conn.zone_b.name == z_next:
-                                conn_name = conn.name
-                                break
-                        timeline[t + 1] = conn_name
-                    else:
-                        timeline[t + 1] = z_next
+```bash
+make run
+```
 
-            drone.path = timeline
-Cette boucle permet de remplir timeline: List[str]
+This launches the graphical interface. A menu lets you select a map by difficulty level. The simulation starts automatically after map selection.
 
-run_drone:
-1- max_turns = max(len(d.path) for d in self.drones_id.values()) est une boucle de comprehtion permettant de stocker dans la variable (max_turn)le plus grand nombre de tour qu'un des drone doit faire pour arrivee jusqu'a destination 
+### Debug
 
-2- for turn in range(1, max_turns):
-            moves: List[str] = [] -> liste de tous les mouvement fait en un tour. ex: moves = ["D1-gate_hell1", "D2-gate_hell2", "D5-maze_loop1"]
+```bash
+make debug
+```
 
-            for d_id, drone in self.drones_id.items():
-                if turn >= len(drone.path):
-                    continue
+Runs the main script using Python's built-in debugger (`pdb`).
 
-                current_pos = drone.path[turn]
-                prev_pos = drone.path[turn - 1]
+### Lint
 
-                if current_pos != prev_pos:
-                    if prev_pos == self.graph.end_zone.name:
-                        continue
-                    moves.append(f"{d_id}-{current_pos}")
+```bash
+make lint
+```
 
-            if moves:
-                self.stock_turns.append(moves)
+Runs `flake8` and `mypy` with standard type-checking flags.
 
-faire une boucle qui itere les tours et dans chaque tour parcourir tous les drone en mettant les conditions suivante:
-- if turn >= len(drone.path): si le tour actuel est plus grand que la longueur du chemin du drone, passe au drone suivant cela signifie qu il est deja arriver et evite un crash.
-Assigne à la variable (current_pos) la zone auquelle il a été attribuer au x eme tour(la position )
-Assigne à la variable (prev_pos) la zone auquelle le drone été attribuer au tour d'avant 
-si la position actuelle est different de la precedente et qu il n est pas arrivee à destination ajoute ldans la liste (moves: List[str] = [])
-la derniere condition (if moves) permet de securiser  l'enregistrement dans stock_turn
-Une fois que (move) à enregistrer les chemins de tout les drone 
+```bash
+make lint-strict
+```
 
-🎯 En résumé pour ton document global
-init run permet d assigner le chemin pour chaque drone et run_drone permet d afficher en output tous les chemin securisant les cqs specifique de chaue
-init_drone permet d'initialiser et de matérialiser la flotte de drones sur la case de départ ("start"), préparant ainsi les structures de données (drones_id et trajectory) pour que init_run puisse ensuite planifier leurs agendas temporels.
+Runs `mypy` with `--strict` for enhanced checking.
+
+### Clean
+
+```bash
+make clean
+```
+
+Removes caches and compiled Python files.
+
+---
+
+## Algorithm Choices and Implementation Strategy
+
+### Step 1 — Reverse Dijkstra (heuristic pre-computation)
+
+Before any drone is routed, a single Dijkstra run is executed **from the end zone backwards** through the entire graph. This produces a dictionary `distances_from_goal`, which stores the real minimum cost to reach the destination from every zone in the graph.
+
+This step is critical: it provides A* with an **admissible heuristic** — one that never overestimates the remaining cost. Because it is computed from real graph distances (not straight-line approximations), it is both admissible and consistent, which guarantees A* finds the optimal path.
+
+### Step 2 — Spatio-temporal A* (per-drone routing)
+
+Each drone is then routed one by one using a **spatio-temporal A*** algorithm. Unlike classical A*, this version does not search in space alone — it searches in **space × time**: each node in the search is a pair `(zone_name, turn)`.
+
+This allows the algorithm to:
+- Respect zone capacity constraints at each specific turn
+- Allow drones to wait in place when a zone ahead is occupied
+- Coordinate multiple drones without conflicts or deadlocks
+
+A global `space_time_reservation` dictionary tracks how many drones will occupy each `(zone, turn)` slot. After each drone's path is computed, its reservations are added to this table so the next drone's A* search avoids those slots.
+
+### Step 3 — Timeline construction
+
+Once a spatio-temporal path is computed for a drone, it is converted into a flat `timeline: List[str]` — a list where index `t` contains the zone (or connection name) the drone occupies at turn `t`. This format is then used by `run_drones` to produce the final turn-by-turn output.
+
+### Visual Representation
+
+The graphical interface is built with `arcade` and consists of two views:
+
+- **MenuView**: displays available maps grouped by difficulty. The user clicks to select a difficulty, then a specific map.
+- **SimulationView**: renders the graph (zones as colored ellipses, connections as lines) and animates each drone as a sprite moving turn by turn. When all drones reach the destination, a summary panel displays total drones, total turns, and the full trajectory log.
+
+---
+
+## Resources
+
+### References
+
+- [A* Search Algorithm — Wikipedia](https://en.wikipedia.org/wiki/A*_search_algorithm)
+- [Dijkstra's Algorithm — Wikipedia](https://en.wikipedia.org/wiki/Dijkstra%27s_algorithm)
+- [Spatio-Temporal A* for Multi-Agent Pathfinding](https://en.wikipedia.org/wiki/Multi-agent_pathfinding)
+- [Python `heapq` module documentation](https://docs.python.org/3/library/heapq.html)
+- [Python-Arcade library documentation](https://api.arcade.academy/)
+- [PEP 257 — Docstring Conventions](https://peps.python.org/pep-0257/)
+- [mypy documentation](https://mypy.readthedocs.io/)
+
+### AI Usage
+
+AI (Claude, Anthropic) was used during this project for the following purposes:
+- Helping structure the overall architecture of the project (class design, file organization)
+- Providing guidance when stuck on specific algorithmic problems (spatio-temporal reservation logic, heuristic design)
+- Assisting with final code review and identifying inconsistencies (type hints, naming conventions)
+
+All AI-generated suggestions were reviewed, understood, and validated before integration. The core logic, algorithmic choices, and implementation decisions were made independently.

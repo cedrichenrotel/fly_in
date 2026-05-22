@@ -6,7 +6,7 @@
 #  By: cehenrot <cehenrot@student.42lyon.fr>     +#+  +:+       +#+         #
 #                                              +#+#+#+#+#+   +#+            #
 #  Created: 2026/05/11 13:34:02 by cehenrot        #+#    #+#               #
-#  Updated: 2026/05/19 18:09:32 by cehenrot        ###   ########.fr        #
+#  Updated: 2026/05/22 15:24:10 by cehenrot        ###   ########.fr        #
 #                                                                           #
 # ************************************************************************* #
 
@@ -129,17 +129,20 @@ class MenuView(arcade.View):
             for map_file in self.maps_diff[self.selected_diff]:
                 px, py, _ = map_positions[map_file]
                 if abs(x - px) < 100 and abs(y - py) < 20:
-                    graph = parse_file(map_file)
+                    try:
+                        graph = parse_file(map_file)
+                        simulator = Simulator(graph)
 
-                    simulator = Simulator(graph)
-
-                    simulator.init_drone()
-                    simulator.init_run()
-                    simulator.run_drones()
-                    simulationview = SimulationView(graph,
-                                                    simulator.stock_turns)
-                    self.window.simulator = simulator
-                    self.window.show_view(simulationview)
+                        simulator.init_drone()
+                        simulator.init_run()
+                        simulator.run_drones()
+                        simulationview = SimulationView(graph,
+                                                        simulator.stock_turns)
+                        self.window.simulator = simulator
+                        self.window.show_view(simulationview)
+                    except Exception as e:
+                        print(f"[ERROR]: {e}")
+                        sys.exit()
 
 
 class Window(arcade.Window):

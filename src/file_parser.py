@@ -3,10 +3,10 @@
 #                                                      :::      ::::::::    #
 #  file_parser.py                                    :+:      :+:    :+:    #
 #                                                  +:+ +:+         +:+      #
-#  By: cehenrot <cehenrot@student.42.fr>         +#+  +:+       +#+         #
+#  By: cehenrot <cehenrot@student.42lyon.fr>     +#+  +:+       +#+         #
 #                                              +#+#+#+#+#+   +#+            #
 #  Created: 2026/04/27 15:02:34 by cehenrot        #+#    #+#               #
-#  Updated: 2026/05/20 09:08:22 by cehenrot        ###   ########.fr        #
+#  Updated: 2026/05/22 14:59:10 by cehenrot        ###   ########.fr        #
 #                                                                           #
 # ************************************************************************* #
 
@@ -94,7 +94,7 @@ def parse_file(file: str) -> Graph:
     with open(file) as f:
         if not f:
             raise Exception(f"[WARNING]: Empty file: {file}")
-        for line in f:
+        for line_num, line in enumerate(f, start=1):
             line = line.strip()
             line = line.split('#')[0]
             if not line:
@@ -104,9 +104,11 @@ def parse_file(file: str) -> Graph:
                 try:
                     nb_drone = int(value)
                     if nb_drone <= 0:
-                        raise Exception("Parser-file-> nb_drones: value <= 0")
+                        raise Exception(f"line: {line_num}-> nb_drones: "
+                                        "value <= 0")
                 except ValueError:
-                    raise Exception("Parser-file-> nb_drones: value unknown")
+                    raise Exception(f"line: {line_num}-> nb_drones: "
+                                    "value unknown")
                 graph.nb_drone = nb_drone
 
             elif line.startswith('start_hub:'):
@@ -128,8 +130,8 @@ def parse_file(file: str) -> Graph:
                 zone_a, zone_b = info[1].split('-')
                 if (zone_a not in graph.dict_zones or
                    zone_b not in graph.dict_zones):
-                    raise Exception("Parser-file-> connection coordinate "
-                                    "unknown")
+                    raise Exception(f"line: {line_num}-> connection coordinate"
+                                    " unknown")
 
                 if frozenset((zone_a, zone_b)) in set_zones:
                     raise Exception("Parser-file-> The same connection appears"
@@ -150,15 +152,16 @@ def parse_file(file: str) -> Graph:
 
                             max_link_capacity = int(value)
                             if max_link_capacity <= 0:
-                                raise Exception(f"max_link_capacity <= 0, "
+                                raise Exception(f"line: {line_num}-> "
+                                                "max_link_capacity <= 0, "
                                                 f"value: {max_link_capacity}")
                     except ValueError as e:
-                        raise Exception(f"Max_link_capacity is not value, "
-                                        f"value: {e}")
+                        raise Exception(f"line: {line_num}-> Max_link_capacity"
+                                        f" is not value, value: {e}")
                 connection = Connection(
                     obj_zone_a,
                     obj_zone_b,
-                    _,
+                    0,
                     max_link_capacity
                     )
 
