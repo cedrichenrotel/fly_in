@@ -6,7 +6,7 @@
 #  By: cehenrot <cehenrot@student.42lyon.fr>     +#+  +:+       +#+         #
 #                                              +#+#+#+#+#+   +#+            #
 #  Created: 2026/05/11 13:34:02 by cehenrot        #+#    #+#               #
-#  Updated: 2026/05/25 14:02:40 by cehenrot        ###   ########.fr        #
+#  Updated: 2026/05/25 19:53:00 by cehenrot        ###   ########.fr        #
 #                                                                           #
 # ************************************************************************* #
 
@@ -40,9 +40,13 @@ class MenuView(arcade.View):
         super().__init__()
         self.list_maps: list[Path] = self.get_map_file("maps")
         self.select_map: int = 0
-        self.maps_diff: list[dict] = self.choice_diff_maps()
+        self.maps_diff: defaultdict[str, list[Path]] = (
+            self.choice_diff_maps()
+            )
         self.menu = arcade.load_texture("image/menu.png")
-        self.positions = self.calculate_positions(list(self.maps_diff.keys()))
+        self.positions: dict[str, tuple[int, int, int]] = (
+            self.calculate_positions(list(self.maps_diff.keys()))
+            )
         self.selected_diff: str = ""
 
     def get_map_file(self, directory: str = "maps") -> list[Path]:
@@ -56,7 +60,7 @@ class MenuView(arcade.View):
         maps = list(folder.glob("**/*.txt"))
         return maps
 
-    def choice_diff_maps(self) -> list[dict]:
+    def choice_diff_maps(self) -> defaultdict[str, list[Path]]:
 
         """Storing .txt files by difficulty"""
         dict_maps = defaultdict(list)
@@ -80,7 +84,7 @@ class MenuView(arcade.View):
                           .content_width)
             y = SCREEN_HEIGHT - espacement * (i + 1)
             x = SCREEN_WIDTH // 2
-            position[difficulty] = (x, y, text_width + PADDING)
+            position[label] = (x, y, int(text_width) + PADDING)
 
         return position
 
@@ -106,7 +110,7 @@ class MenuView(arcade.View):
             choice_positions = self.maps_diff[self.selected_diff]
             map_positions = self.calculate_positions(choice_positions)
             for map in self.maps_diff[self.selected_diff]:
-                x, y, btn_w = map_positions[map]
+                x, y, btn_w = map_positions[map.stem]
                 arcade.draw_text(map.stem, x, y, arcade.color.GOLD, 25,
                                  anchor_x="center", anchor_y="center")
                 arcade.draw_rect_outline(
@@ -127,7 +131,7 @@ class MenuView(arcade.View):
             choice_positions = self.maps_diff[self.selected_diff]
             map_positions = self.calculate_positions(choice_positions)
             for map_file in self.maps_diff[self.selected_diff]:
-                px, py, _ = map_positions[map_file]
+                px, py, _ = map_positions[map_file.stem]
                 if abs(x - px) < 100 and abs(y - py) < 20:
                     try:
                         graph = parse_file(map_file)
@@ -160,7 +164,7 @@ class Window(arcade.Window):
         self.simulator = None
         self.show_view(MenuView())
 
-    def on_key_press(self, key: int, _) -> None:
+    def on_key_press(self, key: int, _: int) -> None:
 
         if key == arcade.key.ESCAPE:
             arcade.exit()
@@ -173,11 +177,11 @@ class SimulationView(arcade.View):
         """class designed for viewing drones"""
         super().__init__()
         self.graph = graph
-        self.sprite_list = arcade.SpriteList()
+        self.sprite_list: arcade.SpriteList = arcade.SpriteList()
         self.stock_turn = stock_turn
         self.current_turn: int = 0
 
-        self.turn_text: object = arcade.Text(
+        self.turn_text: arcade.Text = arcade.Text(
             "Tour: 0",
             10,
             SCREEN_HEIGHT - 30,
@@ -187,7 +191,7 @@ class SimulationView(arcade.View):
 
         self.simulation_finished: bool = False
 
-        self.valid_text: object = arcade.Text(
+        self.valid_text: arcade.Text = arcade.Text(
             "",
             SCREEN_WIDTH // 2,
             SCREEN_HEIGHT // 2,
@@ -233,7 +237,14 @@ class SimulationView(arcade.View):
         for sprite in self.drone_sprites.values():
             self.sprite_list.append(sprite)
 
-    def to_pixel(self, x, y, min_x, min_y, max_x, max_y):
+    def to_pixel(
+            self, x: float,
+            y: float,
+            min_x: float,
+            min_y: float,
+            max_x: float,
+            max_y: float
+            ) -> tuple[float, float]:
 
         x_pixel = MARGIN + (x - min_x) * ((SCREEN_WIDTH - 2 * MARGIN) / max_x)
         y_pixel = MARGIN + (y - min_y) * ((SCREEN_HEIGHT - 2 * MARGIN) / max_y)
@@ -394,7 +405,7 @@ class SimulationView(arcade.View):
             self.valid_text.draw()
             self.draw_panel()
 
-    def on_update(self, delta_time) -> None:
+    def on_update(self, delta_time: float) -> None:
 
         """The entire logic for updating the simulator.
             param delt a_time: Time elapsed since the last update

@@ -6,7 +6,7 @@
 #  By: cehenrot <cehenrot@student.42lyon.fr>     +#+  +:+       +#+         #
 #                                              +#+#+#+#+#+   +#+            #
 #  Created: 2026/04/30 14:27:33 by cehenrot        #+#    #+#               #
-#  Updated: 2026/05/22 14:45:17 by cehenrot        ###   ########.fr        #
+#  Updated: 2026/05/25 19:15:02 by cehenrot        ###   ########.fr        #
 #                                                                           #
 # ************************************************************************* #
 
@@ -39,7 +39,8 @@ class Algo(ABC):
     def run(self) -> None:
         pass
 
-    def reconstruct_path(self, start_zone=None) -> list[str]:
+    def reconstruct_path(self,
+                         start_zone: Optional['Zone'] = None) -> list[str]:
 
         """Reconstruct the most direct path from the starting
             point using a list-based algorithm, whilst ensuring
@@ -168,7 +169,7 @@ class AlgoAstar(Algo):
                 continue
             visited.add((zone, turn))
 
-            is_start_or_end: Zone = (zone == self.graph.start_zone.name or
+            is_start_or_end: bool = (zone == self.graph.start_zone.name or
                                      zone == self.graph.end_zone.name)
             zone_obj = self.graph.dict_zones[zone]
 
@@ -192,19 +193,18 @@ class AlgoAstar(Algo):
                 self.graph.dict_zones[zone])
 
             for neighbor in get_graph:
-                new_neighbor: str = (
+                new_neighbor: Zone = (
                     neighbor.zone_b
                     if zone == neighbor.zone_a.name
                     else neighbor.zone_a
                     )
-
                 if new_neighbor.zone_type.name == "blocked":
                     continue
 
                 cost: int = new_neighbor.zone_type.cost()
                 arrival_turn: int = turn + cost
-                neighbor_node: tuple[str | int] = (new_neighbor.name,
-                                                   arrival_turn)
+                neighbor_node: tuple[str, int] = (new_neighbor.name,
+                                                  arrival_turn)
 
                 is_neighbor_end: bool = (new_neighbor.name ==
                                          self.graph.end_zone.name)

@@ -6,7 +6,7 @@
 #  By: cehenrot <cehenrot@student.42lyon.fr>     +#+  +:+       +#+         #
 #                                              +#+#+#+#+#+   +#+            #
 #  Created: 2026/04/27 17:33:51 by cehenrot        #+#    #+#               #
-#  Updated: 2026/05/22 10:37:38 by cehenrot        ###   ########.fr        #
+#  Updated: 2026/05/25 19:57:09 by cehenrot        ###   ########.fr        #
 #                                                                           #
 # ************************************************************************* #
 
@@ -19,8 +19,11 @@ class ZoneType(Enum):
     restricted = ('restricted', 2)
     priority = ('priority', 1)
 
-    def cost(self):
-        return self.value[1]
+    def cost(self) -> int | float:
+        val = self.value[1]
+        if val == float('inf'):
+            return float('inf')
+        return int(val)
 
 
 class Zone():

@@ -6,7 +6,7 @@
 #  By: cehenrot <cehenrot@student.42lyon.fr>     +#+  +:+       +#+         #
 #                                              +#+#+#+#+#+   +#+            #
 #  Created: 2026/04/27 15:02:34 by cehenrot        #+#    #+#               #
-#  Updated: 2026/05/25 13:47:35 by cehenrot        ###   ########.fr        #
+#  Updated: 2026/05/25 19:07:15 by cehenrot        ###   ########.fr        #
 #                                                                           #
 # ************************************************************************* #
 
@@ -70,7 +70,7 @@ def check_coordinate(coordinate: str, line_num: int) -> int:
 
 
 def extract_metadata(lst_meta: list[str], line_num: int) -> dict:
-    dict_meta = {}
+    dict_meta: dict[str, object] = {}
 
     """function that retrieves metadata values (colour, max_drones, etc.) and
          stores them in a dictionary"""
@@ -82,9 +82,10 @@ def extract_metadata(lst_meta: list[str], line_num: int) -> dict:
             if key == 'zone':
                 dict_meta['zone_type'] = ZoneType[val]
             if key == 'max_drones':
-                dict_meta['max_drones'] = int(val)
-                if dict_meta['max_drones'] <= 0:
+                max_drones = int(val)
+                if max_drones <= 0:
                     raise ValueError("Value of 'max_drone' is not positive")
+                dict_meta['max_drones'] = max_drones
         return dict_meta
     except KeyError:
         raise Exception(f"line {line_num}: invalid zone type: {val}")
