@@ -6,7 +6,7 @@
 #  By: cehenrot <cehenrot@student.42lyon.fr>     +#+  +:+       +#+         #
 #                                              +#+#+#+#+#+   +#+            #
 #  Created: 2026/05/11 13:34:02 by cehenrot        #+#    #+#               #
-#  Updated: 2026/05/22 15:24:10 by cehenrot        ###   ########.fr        #
+#  Updated: 2026/05/25 14:02:40 by cehenrot        ###   ########.fr        #
 #                                                                           #
 # ************************************************************************* #
 
@@ -159,6 +159,11 @@ class Window(arcade.Window):
             )
         self.simulator = None
         self.show_view(MenuView())
+
+    def on_key_press(self, key: int, _) -> None:
+
+        if key == arcade.key.ESCAPE:
+            arcade.exit()
 
 
 class SimulationView(arcade.View):
@@ -440,8 +445,3 @@ class SimulationView(arcade.View):
                 if self.time_since_last_turn > 30.0:
                     arcade.exit()
                 return
-
-    def on_key_press(self, key: int, _) -> None:
-
-        if key == arcade.key.ESCAPE:
-            arcade.exit()

@@ -15,10 +15,10 @@ $(VENV)/bin/activate:
 venv: $(VENV)/bin/activate
 
 install: venv
-	$(PIP) install -r requierements.txt
+	$(PIP) install -r requirements.txt
 
 run: venv
-	@PYTHONPATH=src $(PY) src/main.py $(MAP)
+	@PYTHONPATH=src $(PY) -W ignore src/main.py $(MAP)
 
 debug: venv
 	$(PY) -m pdb $(FILE)
@@ -29,11 +29,13 @@ clean:
 	find . -name "*.pyc" -delete
 
 lint: venv
-	$(PY) -m flake8 .
-	$(PY) -m mypy . --warn-return-any --warn-unused-ignores --ignore-missing-imports --disallow-untyped-defs --check-untyped-defs
+	$(PY) -m flake8 . --exclude=.venv
+	$(PY) -m mypy . --exclude=.venv --warn-return-any \
+	--warn-unused-ignores --ignore-missing-imports \
+	--disallow-untyped-defs --check-untyped-defs
 
 lint-strict: venv
-	$(PY) -m flake8 .
+	$(PY) -m flake8 . --exclude=.venv
 	$(PY) -m mypy . --strict
 
 build: venv
