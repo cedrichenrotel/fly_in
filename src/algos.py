@@ -3,10 +3,10 @@
 #                                                      :::      ::::::::    #
 #  algos.py                                          :+:      :+:    :+:    #
 #                                                  +:+ +:+         +:+      #
-#  By: cehenrot <cehenrot@student.42lyon.fr>     +#+  +:+       +#+         #
+#  By: cehenrot <cehenrot@student.42.fr>         +#+  +:+       +#+         #
 #                                              +#+#+#+#+#+   +#+            #
 #  Created: 2026/04/30 14:27:33 by cehenrot        #+#    #+#               #
-#  Updated: 2026/05/25 19:15:02 by cehenrot        ###   ########.fr        #
+#  Updated: 2026/05/26 10:22:38 by cehenrot        ###   ########.fr        #
 #                                                                           #
 # ************************************************************************* #
 
@@ -178,16 +178,23 @@ class AlgoAstar(Algo):
                 turn + 1), 0)
 
             if (is_start_or_end or space_time_res < zone_obj.max_drones):
-                wait_node = (zone, turn + 1)
-                if current_cost + 1 < self.dict_distances.get(wait_node,
-                                                              sys.maxsize):
-                    self.dict_distances[wait_node] = current_cost + 1
-                    self.dict_predecessors[wait_node] = (zone, turn)
-                    priority = current_cost + 1 + self.heuristic(zone)
-                    heapq.heappush(self.heap, (priority,
-                                               current_cost + 1,
-                                               zone,
-                                               turn + 1))
+
+                prev_node = self.dict_predecessors.get((zone, turn))
+                is_in_transit = (prev_node is not None and
+                                 turn - prev_node[1] == 2)
+
+                if not is_in_transit:
+                    wait_node = (zone, turn + 1)
+
+                    if current_cost + 1 < self.dict_distances.get(wait_node,
+                                                                  sys.maxsize):
+                        self.dict_distances[wait_node] = current_cost + 1
+                        self.dict_predecessors[wait_node] = (zone, turn)
+                        priority = current_cost + 1 + self.heuristic(zone)
+                        heapq.heappush(self.heap, (priority,
+                                                   current_cost + 1,
+                                                   zone,
+                                                   turn + 1))
 
             get_graph: list[Connection] = self.graph.get_neighbors(
                 self.graph.dict_zones[zone])
@@ -213,8 +220,12 @@ class AlgoAstar(Algo):
                     0
                     )
 
+                current_conn_occupancy: int = space_time_reservation.get(
+                    (neighbor.name, turn), 0)
+
                 if (is_neighbor_end or
-                   current_occupancy < new_neighbor.max_drones):
+                        (current_occupancy < new_neighbor.max_drones and
+                         current_conn_occupancy < neighbor.max_link_capacity)):
 
                     if (current_cost + cost <
                        self.dict_distances.get(neighbor_node, sys.maxsize)):

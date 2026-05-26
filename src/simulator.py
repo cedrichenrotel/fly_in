@@ -6,7 +6,7 @@
 #  By: cehenrot <cehenrot@student.42.fr>         +#+  +:+       +#+         #
 #                                              +#+#+#+#+#+   +#+            #
 #  Created: 2026/04/27 17:35:52 by cehenrot        #+#    #+#               #
-#  Updated: 2026/05/21 11:34:27 by cehenrot        ###   ########.fr        #
+#  Updated: 2026/05/26 09:35:42 by cehenrot        ###   ########.fr        #
 #                                                                           #
 # ************************************************************************* #
 
@@ -78,6 +78,21 @@ class Simulator():
             for i in range(len(st_path) - 1):
                 z_curr, t_curr = st_path[i]
                 z_next, t_next = st_path[i + 1]
+
+                conn_name = ""
+                current_zone_obj = self.graph.dict_zones.get(z_curr)
+
+                if current_zone_obj:
+                    for conn in self.graph.get_neighbors(current_zone_obj):
+                        if conn.zone_a.name == (conn.zone_a.name == z_next or
+                                                conn.zone_b.name == z_next):
+                            conn_name = conn.name
+                            break
+
+                if (conn_name, t_curr) not in space_time_reservation:
+                    space_time_reservation[(conn_name, t_curr)] = 1
+                else:
+                    space_time_reservation[(conn_name, t_curr)] += 1
 
                 for t in range(t_curr, t_next):
                     if (t_next - t_curr) == 2 and t == t_curr:

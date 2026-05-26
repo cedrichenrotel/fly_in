@@ -3,10 +3,10 @@
 #                                                      :::      ::::::::    #
 #  visualizer.py                                     :+:      :+:    :+:    #
 #                                                  +:+ +:+         +:+      #
-#  By: cehenrot <cehenrot@student.42lyon.fr>     +#+  +:+       +#+         #
+#  By: cehenrot <cehenrot@student.42.fr>         +#+  +:+       +#+         #
 #                                              +#+#+#+#+#+   +#+            #
 #  Created: 2026/05/11 13:34:02 by cehenrot        #+#    #+#               #
-#  Updated: 2026/05/25 19:53:00 by cehenrot        ###   ########.fr        #
+#  Updated: 2026/05/26 07:26:38 by cehenrot        ###   ########.fr        #
 #                                                                           #
 # ************************************************************************* #
 
@@ -24,8 +24,8 @@ except ImportError as e:
     sys.exit()
 
 MARGIN: int = 50
-SCREEN_WIDTH: int = 1500
-SCREEN_HEIGHT: int = 1200
+SCREEN_WIDTH: int = 1200
+SCREEN_HEIGHT: int = 800
 SCREEN_TITLE: str = "Fly-in Simulator"
 PADDING: int = 20
 BTN_W: int = 200
