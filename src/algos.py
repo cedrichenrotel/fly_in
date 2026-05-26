@@ -6,7 +6,7 @@
 #  By: cehenrot <cehenrot@student.42.fr>         +#+  +:+       +#+         #
 #                                              +#+#+#+#+#+   +#+            #
 #  Created: 2026/04/30 14:27:33 by cehenrot        #+#    #+#               #
-#  Updated: 2026/05/26 10:22:38 by cehenrot        ###   ########.fr        #
+#  Updated: 2026/05/26 13:54:30 by cehenrot        ###   ########.fr        #
 #                                                                           #
 # ************************************************************************* #
 
@@ -161,6 +161,10 @@ class AlgoAstar(Algo):
         while self.heap:
             _, current_cost, zone, turn = heapq.heappop(self.heap)
 
+            max_turns = len(self.graph.dict_zones) * self.graph.nb_drone * 10
+            if turn > max_turns:
+                continue
+
             if zone == self.graph.end_zone.name:
                 self.end_node = (zone, turn)
                 return
@@ -245,6 +249,8 @@ class AlgoAstar(Algo):
                                                    current_cost + cost,
                                                    new_neighbor.name,
                                                    arrival_turn))
+        if not hasattr(self, 'end_node'):
+            raise Exception("Astar -> No path found")
 
     def get_reconstructed_path(self) -> List[Tuple[str, int]]:
         """Reconstructs the path as pairs (zone, turn)."""

@@ -3,10 +3,10 @@
 #                                                      :::      ::::::::    #
 #  file_parser.py                                    :+:      :+:    :+:    #
 #                                                  +:+ +:+         +:+      #
-#  By: cehenrot <cehenrot@student.42lyon.fr>     +#+  +:+       +#+         #
+#  By: cehenrot <cehenrot@student.42.fr>         +#+  +:+       +#+         #
 #                                              +#+#+#+#+#+   +#+            #
 #  Created: 2026/04/27 15:02:34 by cehenrot        #+#    #+#               #
-#  Updated: 2026/05/25 19:07:15 by cehenrot        ###   ########.fr        #
+#  Updated: 2026/05/26 14:09:39 by cehenrot        ###   ########.fr        #
 #                                                                           #
 # ************************************************************************* #
 
@@ -110,6 +110,7 @@ def parse_file(file: str) -> Graph:
                 _, value = line.split(':')
                 try:
                     nb_drone = int(value)
+
                     if nb_drone <= 0:
                         raise Exception(f"line{line_num}: Nb_drones: "
                                         "value <= 0")
@@ -179,6 +180,7 @@ def parse_file(file: str) -> Graph:
             raise Exception("Parser-file: no start_hub found")
         if graph.end_zone is None:
             raise Exception("Parser-file: no end_hub found")
-        if graph.nb_drone == 0:
-            raise Exception("Parser-file: no nb_drones found")
+        if not graph.dict_adjacency:
+            raise Exception(f"line {line_num}: Parser-> no "
+                            "connections found in file")
     return graph
