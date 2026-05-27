@@ -6,7 +6,7 @@
 #  By: cehenrot <cehenrot@student.42.fr>         +#+  +:+       +#+         #
 #                                              +#+#+#+#+#+   +#+            #
 #  Created: 2026/05/11 13:34:02 by cehenrot        #+#    #+#               #
-#  Updated: 2026/05/26 07:26:38 by cehenrot        ###   ########.fr        #
+#  Updated: 2026/05/27 16:43:05 by cehenrot        ###   ########.fr        #
 #                                                                           #
 # ************************************************************************* #
 
@@ -14,7 +14,7 @@ import sys
 
 try:
     from collections import defaultdict
-    from file_parser import parse_file
+    from file_parser import FileParser
     from simulator import Simulator
     from graph import Graph
     from pathlib import Path
@@ -134,7 +134,8 @@ class MenuView(arcade.View):
                 px, py, _ = map_positions[map_file.stem]
                 if abs(x - px) < 100 and abs(y - py) < 20:
                     try:
-                        graph = parse_file(map_file)
+                        parse: FileParser = FileParser()
+                        graph = parse.parse_file(map_file)
                         simulator = Simulator(graph)
 
                         simulator.init_drone()

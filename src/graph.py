@@ -6,13 +6,14 @@
 #  By: cehenrot <cehenrot@student.42.fr>         +#+  +:+       +#+         #
 #                                              +#+#+#+#+#+   +#+            #
 #  Created: 2026/04/27 17:35:18 by cehenrot        #+#    #+#               #
-#  Updated: 2026/05/11 13:27:04 by cehenrot        ###   ########.fr        #
+#  Updated: 2026/05/27 17:42:04 by cehenrot        ###   ########.fr        #
 #                                                                           #
 # ************************************************************************* #
 
 import sys
 
 try:
+    from error import ParseError
     from connection import Connection
     from zone import Zone
 except ImportError as e:
@@ -50,8 +51,8 @@ class Graph():
         if zone.name not in self.dict_zones:
             self.dict_zones[zone.name] = zone
         else:
-            raise Exception("add_zone -> Two zones have been defined with the"
-                            "same name")
+            raise ParseError("add_zone -> Two zones have been defined with the"
+                             "same name")
 
     """Add a connection to both zones in dict_adjacency.
         Connections are bidirectional"""

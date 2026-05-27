@@ -6,13 +6,14 @@
 #  By: cehenrot <cehenrot@student.42.fr>         +#+  +:+       +#+         #
 #                                              +#+#+#+#+#+   +#+            #
 #  Created: 2026/04/27 15:02:34 by cehenrot        #+#    #+#               #
-#  Updated: 2026/05/26 14:09:39 by cehenrot        ###   ########.fr        #
+#  Updated: 2026/05/27 17:41:58 by cehenrot        ###   ########.fr        #
 #                                                                           #
 # ************************************************************************* #
 
 import sys
 
 try:
+    from error import ParseError
     from zone import Zone, ZoneType
     from graph import Graph
     from connection import Connection
@@ -21,166 +22,187 @@ except ImportError as e:
     sys.exit()
 
 
-def extraction_info(line: str) -> list:
+class FileParser():
 
-    """split a line in the file to extract the information more effectively"""
-    info = line.replace('[', '').replace(']', '').split()
-    if info[0] == 'connection:':
-        if len(info) < 2:
-            raise Exception(f"Exctraction_info-> nb info connection "
-                            f"ncorrect {info} number: {len(info)}")
-    else:
-        if len(info) < 4:
-            raise Exception(f"Exctraction_info-> nb info ligne "
-                            f"incorrect {info} number: {len(info)}")
-    return info
+    def __init__(self) -> None:
+        pass
 
+    def extraction_info(self, line: str) -> list:
 
-def parse_zone(line: str, line_num: int) -> Zone:
-    info = extraction_info(line)
-    name_zone = check_name_zone(info[1], line_num)
-    x = check_coordinate(info[2], line_num)
-    y = check_coordinate(info[3], line_num)
-    meta = extract_metadata(info[4:], line_num)
-    zone = Zone(name_zone, x, y, **meta)
-    return zone
+        """split a line in the file to extract the information more
+            effectively"""
+        info = line.replace('[', '').replace(']', '').split()
+        if info[0] == 'connection:':
+            if len(info) < 2:
+                raise ValueError(f"Exctraction_info-> nb info connection "
+                                 f"ncorrect {info} number: {len(info)}")
+        else:
+            if len(info) < 4:
+                raise ValueError(f"Exctraction_info-> nb info ligne "
+                                 f"incorrect {info} number: {len(info)}")
+        return info
 
+    def parse_zone(self, line: str, line_num: int) -> Zone:
+        info = self.extraction_info(line)
+        name_zone = self.check_name_zone(info[1], line_num)
+        x = self.check_coordinate(info[2], line_num)
+        y = self.check_coordinate(info[3], line_num)
+        meta = self.extract_metadata(info[4:], line_num)
+        zone = Zone(name_zone, x, y, **meta)
+        return zone
 
-def check_name_zone(name_zone: str, line_num: int) -> str:
+    def check_name_zone(self, name_zone: str, line_num: int) -> str:
 
-    """checks that there are no '-', then stores the field name in a
-        variable """
-    name = name_zone
-    if '-' in name_zone:
-        raise Exception(f"line {line_num}: File_parser-> character "
-                        "not allowed")
-    return name
+        """checks that there are no '-', then stores the field name in a
+            variable """
+        name = name_zone
+        if '-' in name_zone:
+            raise ParseError(f"line {line_num}: File_parser-> character "
+                             "not allowed")
+        return name
 
+    def check_coordinate(self, coordinate: str, line_num: int) -> int:
 
-def check_coordinate(coordinate: str, line_num: int) -> int:
+        """checks that the value is indeed an integer and stores it in a
+            variable"""
+        try:
+            x = int(coordinate)
+            return x
+        except ValueError as e:
+            raise ValueError(f"line {line_num}: Check_coordinate-> "
+                             f"incorrect value: {e}")
 
-    """checks that the value is indeed an integer and stores it in a
-        variable"""
-    try:
-        x = int(coordinate)
-        return x
-    except ValueError as e:
-        raise Exception(f"line {line_num}: Check_coordinate-> "
-                        f"incorrect value: {e}")
+    def extract_metadata(self, st_meta: list[str], line_num: int) -> dict:
+        dict_meta: dict[str, object] = {}
 
+        """function that retrieves metadata values (colour, max_drones, etc.)
+            and stores them in a dictionary"""
+        try:
+            for meta in st_meta:
+                key, val = meta.split('=')
+                if key == 'color':
+                    dict_meta['color'] = val
+                if key == 'zone':
+                    dict_meta['zone_type'] = ZoneType[val]
+                if key == 'max_drones':
+                    max_drones = int(val)
+                    if max_drones <= 0:
+                        raise ValueError("Value of 'max_drone' is "
+                                         "not positive")
+                    dict_meta['max_drones'] = max_drones
+            return dict_meta
+        except KeyError:
+            raise KeyError(f"line {line_num}: invalid zone type: {val}")
+        except ValueError as e:
+            raise ValueError(f"line {line_num}: Extract_metadata-> {e}")
 
-def extract_metadata(lst_meta: list[str], line_num: int) -> dict:
-    dict_meta: dict[str, object] = {}
+    def parse_file(self, file: str) -> Graph:
+        graph = Graph()
+        set_zones = set()
 
-    """function that retrieves metadata values (colour, max_drones, etc.) and
-         stores them in a dictionary"""
-    try:
-        for meta in lst_meta:
-            key, val = meta.split('=')
-            if key == 'color':
-                dict_meta['color'] = val
-            if key == 'zone':
-                dict_meta['zone_type'] = ZoneType[val]
-            if key == 'max_drones':
-                max_drones = int(val)
-                if max_drones <= 0:
-                    raise ValueError("Value of 'max_drone' is not positive")
-                dict_meta['max_drones'] = max_drones
-        return dict_meta
-    except KeyError:
-        raise Exception(f"line {line_num}: invalid zone type: {val}")
-    except ValueError as e:
-        raise Exception(f"line {line_num}: Extract_metadata-> {e}")
+        """Parse a map file and build a Graph object."""
+        with open(file) as f:
+            empty: bool = True
+            dup_nb_drone: bool = False
 
-
-def parse_file(file: str) -> Graph:
-    graph = Graph()
-    set_zones = set()
-
-    """Parse a map file and build a Graph object."""
-    with open(file) as f:
-        if not f:
-            raise Exception(f"[WARNING] Empty file: {file}")
-        for line_num, line in enumerate(f, start=1):
-            line = line.strip()
-            line = line.split('#')[0]
-            if not line:
-                continue
-            if line.startswith('nb_drones:'):
-                _, value = line.split(':')
-                try:
-                    nb_drone = int(value)
+            for line_num, line in enumerate(f, start=1):
+                empty = False
+                line = line.strip()
+                line = line.split('#')[0]
+                if not line:
+                    continue
+                if not dup_nb_drone and not line.startswith('nb_drones:'):
+                    raise ParseError(f"line {line_num}: 'nb_drones' must be "
+                                     "defined first")
+                if line.startswith('nb_drones:'):
+                    _, value = line.split(':')
+                    try:
+                        nb_drone = int(value)
+                    except ValueError:
+                        raise ValueError(f"line: {line_num}: Nb_drones: "
+                                         "value unknown")
 
                     if nb_drone <= 0:
-                        raise Exception(f"line{line_num}: Nb_drones: "
-                                        "value <= 0")
-                except ValueError:
-                    raise Exception(f"line: {line_num}: Nb_drones: "
-                                    "value unknown")
-                graph.nb_drone = nb_drone
+                        raise ValueError(f"line{line_num}: Nb_drones: "
+                                         "value <= 0")
+                    if dup_nb_drone:
+                        raise ParseError(f"line{line_num}: 'nb_drones' "
+                                         "is a duplicate")
+                    dup_nb_drone = True
 
-            elif line.startswith('start_hub:'):
-                zone = parse_zone(line, line_num)
-                graph.add_zone(zone)
-                graph.set_start_zone(zone)
+                    graph.nb_drone = nb_drone
 
-            elif line.startswith('end_hub:'):
-                zone = parse_zone(line, line_num)
-                graph.add_zone(zone)
-                graph.set_end_zone(zone)
+                elif line.startswith('start_hub:'):
+                    zone = self.parse_zone(line, line_num)
+                    graph.add_zone(zone)
+                    graph.set_start_zone(zone)
 
-            elif line.startswith('hub:'):
-                zone = parse_zone(line, line_num)
-                graph.add_zone(zone)
+                elif line.startswith('end_hub:'):
+                    zone = self.parse_zone(line, line_num)
+                    graph.add_zone(zone)
+                    graph.set_end_zone(zone)
 
-            elif line.startswith('connection:'):
-                info = extraction_info(line)
-                zone_a, zone_b = info[1].split('-')
-                if (zone_a not in graph.dict_zones or
-                   zone_b not in graph.dict_zones):
-                    raise Exception(f"line {line_num}: Connection coordinate"
-                                    " unknown")
+                elif line.startswith('hub:'):
+                    zone = self.parse_zone(line, line_num)
+                    graph.add_zone(zone)
 
-                if frozenset((zone_a, zone_b)) in set_zones:
-                    raise Exception(f"line {line_num}: Parser-file-> "
-                                    "The same connection appears more "
-                                    "than once")
-                set_zones.add(frozenset((zone_a, zone_b)))
+                elif line.startswith('connection:'):
+                    info = self.extraction_info(line)
+                    zone_a, zone_b = info[1].split('-')
+                    if (zone_a not in graph.dict_zones or
+                       zone_b not in graph.dict_zones):
+                        raise KeyError(f"line {line_num}: "
+                                       "Connection coordinate unknown")
 
-                obj_zone_a = graph.dict_zones[zone_a]
-                obj_zone_b = graph.dict_zones[zone_b]
+                    if frozenset((zone_a, zone_b)) in set_zones:
+                        raise ParseError(f"line {line_num}: Parser-file-> "
+                                         "The same connection appears more "
+                                         "than once"
+                                         )
 
-                max_link_capacity = 1
-                if len(info) > 2:
-                    try:
-                        key, value = info[2].split("=")
-                        if (
-                            key == 'max_link_capacity' or
-                            key == 'max_drones_capacity'
-                        ):
+                    set_zones.add(frozenset((zone_a, zone_b)))
 
-                            max_link_capacity = int(value)
-                            if max_link_capacity <= 0:
-                                raise Exception(f"line {line_num}: "
-                                                "Max_link_capacity <= 0, "
-                                                f"value: {max_link_capacity}")
-                    except ValueError as e:
-                        raise Exception(f"line {line_num}: Max_link_capacity"
-                                        f" is not value, value: {e}")
-                connection = Connection(
-                    obj_zone_a,
-                    obj_zone_b,
-                    0,
-                    max_link_capacity
-                    )
+                    obj_zone_a = graph.dict_zones[zone_a]
+                    obj_zone_b = graph.dict_zones[zone_b]
 
-                graph.add_adjacency(connection)
+                    max_link_capacity = 1
+                    if len(info) > 2:
+                        try:
+                            key, value = info[2].split("=")
+                            if (
+                                key == 'max_link_capacity' or
+                                key == 'max_drones_capacity'
+                            ):
 
-        if graph.start_zone is None:
-            raise Exception("Parser-file: no start_hub found")
-        if graph.end_zone is None:
-            raise Exception("Parser-file: no end_hub found")
-        if not graph.dict_adjacency:
-            raise Exception(f"line {line_num}: Parser-> no "
-                            "connections found in file")
-    return graph
+                                max_link_capacity = int(value)
+                        except ValueError as e:
+                            raise ValueError(f"line {line_num}: "
+                                             "Max_link_capacity"
+                                             f" is not value, value: {e}"
+                                             )
+                        if max_link_capacity <= 0:
+                            raise ValueError(f"line {line_num}: "
+                                             "Max_link_capacity <= 0, "
+                                             "value: "
+                                             f"{max_link_capacity}"
+                                             )
+
+                    connection = Connection(
+                        obj_zone_a,
+                        obj_zone_b,
+                        0,
+                        max_link_capacity
+                        )
+
+                    graph.add_adjacency(connection)
+            if empty:
+                raise ValueError(f"Empty file: {file}")
+
+            if graph.start_zone is None:
+                raise ParseError("Parser-file: no start_hub found")
+            if graph.end_zone is None:
+                raise ParseError("Parser-file: no end_hub found")
+            if not graph.dict_adjacency:
+                raise ParseError(f"line {line_num}: Parser-> no "
+                                 "connections found in file")
+        return graph

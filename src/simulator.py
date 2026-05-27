@@ -6,7 +6,7 @@
 #  By: cehenrot <cehenrot@student.42.fr>         +#+  +:+       +#+         #
 #                                              +#+#+#+#+#+   +#+            #
 #  Created: 2026/04/27 17:35:52 by cehenrot        #+#    #+#               #
-#  Updated: 2026/05/27 11:18:36 by cehenrot        ###   ########.fr        #
+#  Updated: 2026/05/27 17:53:03 by cehenrot        ###   ########.fr        #
 #                                                                           #
 # ************************************************************************* #
 
@@ -28,8 +28,7 @@ class Simulator():
         self.graph = graph
         self.stock_turns: list[list[str]] = []
         self.drones_id: dict[str, Drone] = {}
-        self.paths: list = []
-        self.trajectory: dict = {}
+        self.trajectory: dict[str, list[str]] = {}
         self.nb_turn: int = 0
         self.distances_from_goal: dict[str, int] = {}
 
