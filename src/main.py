@@ -16,10 +16,9 @@ def main() -> None:
     turns = 0
     if window.simulator:
         for turn in window.simulator.stock_turns:
-            print(' '.join(turn))
-            turns += 1
-            print(turns)
+            print(f"turn {turns}: {', '.join(turn)}")
             print()
+            turns += 1
 
 
 if __name__ == "__main__":

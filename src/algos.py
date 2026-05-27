@@ -6,7 +6,7 @@
 #  By: cehenrot <cehenrot@student.42.fr>         +#+  +:+       +#+         #
 #                                              +#+#+#+#+#+   +#+            #
 #  Created: 2026/04/30 14:27:33 by cehenrot        #+#    #+#               #
-#  Updated: 2026/05/26 13:54:30 by cehenrot        ###   ########.fr        #
+#  Updated: 2026/05/27 11:12:00 by cehenrot        ###   ########.fr        #
 #                                                                           #
 # ************************************************************************* #
 
@@ -177,7 +177,7 @@ class AlgoAstar(Algo):
                                      zone == self.graph.end_zone.name)
             zone_obj = self.graph.dict_zones[zone]
 
-            space_time_res: Optional[dict] = space_time_reservation.get((
+            space_time_res: Optional[int] = space_time_reservation.get((
                 zone,
                 turn + 1), 0)
 
