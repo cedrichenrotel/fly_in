@@ -6,7 +6,7 @@
 #  By: cehenrot <cehenrot@student.42.fr>         +#+  +:+       +#+         #
 #                                              +#+#+#+#+#+   +#+            #
 #  Created: 2026/05/11 13:34:02 by cehenrot        #+#    #+#               #
-#  Updated: 2026/05/27 16:43:05 by cehenrot        ###   ########.fr        #
+#  Updated: 2026/05/29 13:52:42 by cehenrot        ###   ########.fr        #
 #                                                                           #
 # ************************************************************************* #
 
@@ -324,7 +324,7 @@ class SimulationView(arcade.View):
 
             arcade.draw_text(
                 f"{prefix}{short_text}",
-                120,  # Jolie marge de 120 pixels à gauche de l'écran
+                120,
                 y_pos,
                 arcade.color.LIGHT_GRAY,
                 11

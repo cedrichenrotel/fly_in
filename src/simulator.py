@@ -6,7 +6,7 @@
 #  By: cehenrot <cehenrot@student.42.fr>         +#+  +:+       +#+         #
 #                                              +#+#+#+#+#+   +#+            #
 #  Created: 2026/04/27 17:35:52 by cehenrot        #+#    #+#               #
-#  Updated: 2026/05/27 17:53:03 by cehenrot        ###   ########.fr        #
+#  Updated: 2026/05/29 13:55:21 by cehenrot        ###   ########.fr        #
 #                                                                           #
 # ************************************************************************* #
 
@@ -31,6 +31,7 @@ class Simulator():
         self.trajectory: dict[str, list[str]] = {}
         self.nb_turn: int = 0
         self.distances_from_goal: dict[str, int] = {}
+        self.capacity_log: list[str] = []
 
     def init_drone(self) -> None:
         """init_drone: creates all drones in the start_zone"""
@@ -131,5 +132,31 @@ class Simulator():
 
             if moves:
                 self.stock_turns.append(moves)
+
+            for zone_name, zone in self.graph.dict_zones.items():
+                count = sum(
+                    1 for d in self.drones_id.values()
+                    if turn < len(d.path) and d.path[turn] == zone_name
+                    )
+                if count > 0:
+                    self.capacity_log.append(
+                        f"turn: {turn} | zone: {zone_name}"
+                        f"{count}/{zone.max_drones} drones"
+                    )
+            seen_conns = set()
+            for conns in self.graph.dict_adjacency.values():
+                for conn in conns:
+                    if conn.name in seen_conns:
+                        continue
+                    seen_conns.add(conn.name)
+                    conn_count = sum(
+                        1 for d in self.drones_id.values()
+                        if turn < len(d.path) and d.path[turn] == conn.name
+                    )
+                    if conn_count > 0:
+                        self.capacity_log.append(
+                             f"turn: {turn} | connection: {conn.name} "
+                             f"{conn_count}/{conn.max_link_capacity} used"
+                        )
 
         self.nb_turn = len(self.stock_turns)
