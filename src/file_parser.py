@@ -6,7 +6,7 @@
 #  By: cehenrot <cehenrot@student.42.fr>         +#+  +:+       +#+         #
 #                                              +#+#+#+#+#+   +#+            #
 #  Created: 2026/04/27 15:02:34 by cehenrot        #+#    #+#               #
-#  Updated: 2026/06/01 10:59:02 by cehenrot        ###   ########.fr        #
+#  Updated: 2026/06/01 12:38:22 by cehenrot        ###   ########.fr        #
 #                                                                           #
 # ************************************************************************* #
 
@@ -36,7 +36,8 @@ class FileParser():
 
         if crochet_open or crochet_close:
             if not crochet_open:
-                raise ParseError(f"Line {line_num}: missing crochet open '['")
+                raise ParseError(f"Line {line_num}: missing crochet "
+                                 "open '['")
             if not crochet_close:
                 raise ParseError(f"Line {line_num}: missing crochets "
                                  "close ']'")
@@ -46,11 +47,18 @@ class FileParser():
                 raise ParseError(f"Line {line_num}: multiple crochets")
 
         line_brut = line.split()
+        inside_brackets = False
+
         for part in line_brut:
-            if '[' not in part and ']' not in part:
-                if '=' in part:
-                    raise ValueError(f"Line {line_num}: Metadata must be "
-                                     "enclosed in brackets '[]'")
+            if '[' in part:
+                inside_brackets = True
+                continue
+            if ']' in part:
+                inside_brackets = False
+                continue
+            if not inside_brackets and '=' in part:
+                raise ValueError(f"Line {line_num}: Metadata must be "
+                                 "enclosed in brackets '[]'")
 
         info = line.replace('[', '').replace(']', '').split()
         if info[0] == 'connection:':
@@ -157,6 +165,9 @@ class FileParser():
                     if nb_drone <= 0:
                         raise ValueError(f"Line{line_num}: Nb_drones: "
                                          "value <= 0")
+                    if nb_drone > 100:
+                        raise ValueError(f"Line{line_num}: Nb_drones: "
+                                         "value > 100")
                     if dup_nb_drone:
                         raise ParseError(f"Line{line_num}: 'nb_drones' "
                                          "is a duplicate")
@@ -190,8 +201,6 @@ class FileParser():
                 elif line.startswith('connection:'):
                     info = self.extraction_info(line, line_num)
                     zone_a, zone_b = info[1].split('-', maxsplit=1)
-
-                    self.check_doublon_zone(zone, set_name_zone, line_num)
 
                     if (zone_a not in graph.dict_zones or
                        zone_b not in graph.dict_zones):
