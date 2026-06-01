@@ -6,7 +6,7 @@
 #  By: cehenrot <cehenrot@student.42.fr>         +#+  +:+       +#+         #
 #                                              +#+#+#+#+#+   +#+            #
 #  Created: 2026/04/27 15:02:34 by cehenrot        #+#    #+#               #
-#  Updated: 2026/06/01 09:54:58 by cehenrot        ###   ########.fr        #
+#  Updated: 2026/06/01 10:59:02 by cehenrot        ###   ########.fr        #
 #                                                                           #
 # ************************************************************************* #
 
@@ -27,23 +27,30 @@ class FileParser():
     def __init__(self) -> None:
         pass
 
-    def extraction_info(self, line: str, line_num) -> list:
+    def extraction_info(self, line: str, line_num: int) -> list:
 
         """split a line in the file to extract the information more
             effectively"""
-        brackets_open = '[' in line
-        brackets_close = ']' in line
+        crochet_open = '[' in line
+        crochet_close = ']' in line
 
-        if brackets_open or brackets_close:
-            if not brackets_open:
-                raise ParseError(f"Line {line_num}: missing brackets open '['")
-            if not brackets_close:
-                raise ParseError(f"Line {line_num}: missing brackets "
+        if crochet_open or crochet_close:
+            if not crochet_open:
+                raise ParseError(f"Line {line_num}: missing crochet open '['")
+            if not crochet_close:
+                raise ParseError(f"Line {line_num}: missing crochets "
                                  "close ']'")
             if line.index('[') > line.index(']'):
-                raise ParseError(f"Line {line_num}:  ']' before '['")
-            if brackets_open > 1 or brackets_close > 1:
-                raise ParseError(f"Line {line_num}: multiple brackets")
+                raise ParseError(f"Line {line_num}: ']' before '['")
+            if line.count('[') > 1 or line.count(']') > 1:
+                raise ParseError(f"Line {line_num}: multiple crochets")
+
+        line_brut = line.split()
+        for part in line_brut:
+            if '[' not in part and ']' not in part:
+                if '=' in part:
+                    raise ValueError(f"Line {line_num}: Metadata must be "
+                                     "enclosed in brackets '[]'")
 
         info = line.replace('[', '').replace(']', '').split()
         if info[0] == 'connection:':
@@ -110,11 +117,22 @@ class FileParser():
         except ValueError as e:
             raise ValueError(f"line {line_num}: Extract_metadata-> {e}")
 
+    def check_doublon_zone(self, zone: Zone, set_name_zone: set[str],
+                           line_num: int) -> None:
+
+        if zone.name in set_name_zone:
+            raise ParseError(f"Line {line_num}: duplicate zone "
+                             f"name '{zone.name}'")
+
+        set_name_zone.add(zone.name)
+
     def parse_file(self, file: str) -> Graph:
-        graph = Graph()
-        set_zones = set()
 
         """Parse a map file and build a Graph object."""
+        graph = Graph()
+        set_zones = set()
+        set_name_zone: set[str] = set()
+
         with open(file) as f:
             empty: bool = True
             dup_nb_drone: bool = False
@@ -126,21 +144,21 @@ class FileParser():
                 if not line:
                     continue
                 if not dup_nb_drone and not line.startswith('nb_drones:'):
-                    raise ParseError(f"line {line_num}: 'nb_drones' must be "
+                    raise ParseError(f"Line {line_num}: 'nb_drones' must be "
                                      "defined first")
                 if line.startswith('nb_drones:'):
                     _, value = line.split(':')
                     try:
                         nb_drone = int(value)
                     except ValueError:
-                        raise ValueError(f"line: {line_num}: Nb_drones: "
+                        raise ValueError(f"Line: {line_num}: Nb_drones: "
                                          "value unknown")
 
                     if nb_drone <= 0:
-                        raise ValueError(f"line{line_num}: Nb_drones: "
+                        raise ValueError(f"Line{line_num}: Nb_drones: "
                                          "value <= 0")
                     if dup_nb_drone:
-                        raise ParseError(f"line{line_num}: 'nb_drones' "
+                        raise ParseError(f"Line{line_num}: 'nb_drones' "
                                          "is a duplicate")
                     dup_nb_drone = True
 
@@ -148,21 +166,33 @@ class FileParser():
 
                 elif line.startswith('start_hub:'):
                     zone = self.parse_zone(line, line_num)
+
+                    self.check_doublon_zone(zone, set_name_zone, line_num)
+
                     graph.add_zone(zone)
                     graph.set_start_zone(zone)
 
                 elif line.startswith('end_hub:'):
                     zone = self.parse_zone(line, line_num)
+
+                    self.check_doublon_zone(zone, set_name_zone, line_num)
+
                     graph.add_zone(zone)
                     graph.set_end_zone(zone)
 
                 elif line.startswith('hub:'):
                     zone = self.parse_zone(line, line_num)
+
+                    self.check_doublon_zone(zone, set_name_zone, line_num)
+
                     graph.add_zone(zone)
 
                 elif line.startswith('connection:'):
                     info = self.extraction_info(line, line_num)
                     zone_a, zone_b = info[1].split('-', maxsplit=1)
+
+                    self.check_doublon_zone(zone, set_name_zone, line_num)
+
                     if (zone_a not in graph.dict_zones or
                        zone_b not in graph.dict_zones):
                         raise KeyError(f"line {line_num}: "
