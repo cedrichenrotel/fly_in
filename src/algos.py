@@ -6,7 +6,7 @@
 #  By: cehenrot <cehenrot@student.42.fr>         +#+  +:+       +#+         #
 #                                              +#+#+#+#+#+   +#+            #
 #  Created: 2026/04/30 14:27:33 by cehenrot        #+#    #+#               #
-#  Updated: 2026/05/27 11:12:00 by cehenrot        ###   ########.fr        #
+#  Updated: 2026/06/01 16:12:41 by cehenrot        ###   ########.fr        #
 #                                                                           #
 # ************************************************************************* #
 
@@ -217,8 +217,6 @@ class AlgoAstar(Algo):
                 neighbor_node: tuple[str, int] = (new_neighbor.name,
                                                   arrival_turn)
 
-                is_neighbor_end: bool = (new_neighbor.name ==
-                                         self.graph.end_zone.name)
                 current_occupancy: int = space_time_reservation.get(
                     neighbor_node,
                     0
@@ -227,9 +225,8 @@ class AlgoAstar(Algo):
                 current_conn_occupancy: int = space_time_reservation.get(
                     (neighbor.name, turn), 0)
 
-                if (is_neighbor_end or
-                        (current_occupancy < new_neighbor.max_drones and
-                         current_conn_occupancy < neighbor.max_link_capacity)):
+                if (current_occupancy < new_neighbor.max_drones and
+                   current_conn_occupancy < neighbor.max_link_capacity):
 
                     if (current_cost + cost <
                        self.dict_distances.get(neighbor_node, sys.maxsize)):

@@ -6,7 +6,7 @@
 #  By: cehenrot <cehenrot@student.42.fr>         +#+  +:+       +#+         #
 #                                              +#+#+#+#+#+   +#+            #
 #  Created: 2026/04/27 17:35:52 by cehenrot        #+#    #+#               #
-#  Updated: 2026/05/29 13:55:21 by cehenrot        ###   ########.fr        #
+#  Updated: 2026/06/01 16:03:15 by cehenrot        ###   ########.fr        #
 #                                                                           #
 # ************************************************************************* #
 
@@ -65,12 +65,25 @@ class Simulator():
 
             st_path = algo_a.get_reconstructed_path()
 
-            for zone_name, turn in st_path:
+            for i, (zone_name, turn) in enumerate(st_path):
                 if (zone_name != self.graph.start_zone.name and
                    zone_name != self.graph.end_zone.name):
                     space_time_reservation[(zone_name, turn)] = (
                         space_time_reservation.get((zone_name, turn), 0) + 1
                         )
+                if i < len(st_path) - 1:
+                    z_next, t_next = st_path[i + 1]
+                    current_zone_obj = self.graph.dict_zones.get(zone_name)
+                    if current_zone_obj:
+                        for conn in self.graph.get_neighbors(current_zone_obj):
+                            if (conn.zone_a.name == z_next or
+                               conn.zone_b.name == z_next):
+                                space_time_reservation[(conn.name, turn)] = (
+                                    space_time_reservation.get((
+                                        conn.name,
+                                        turn
+                                        ), 0) + 1)
+                                break
 
             max_turn: int = st_path[-1][1]
             timeline: List[str] = [self.graph.start_zone.name] * (max_turn + 1)
@@ -78,21 +91,6 @@ class Simulator():
             for i in range(len(st_path) - 1):
                 z_curr, t_curr = st_path[i]
                 z_next, t_next = st_path[i + 1]
-
-                conn_name = ""
-                current_zone_obj = self.graph.dict_zones.get(z_curr)
-
-                if current_zone_obj:
-                    for conn in self.graph.get_neighbors(current_zone_obj):
-                        if (conn.zone_a.name == z_next or
-                           conn.zone_b.name == z_next):
-                            conn_name = conn.name
-                            break
-                    if conn_name != "":
-                        if (conn_name, t_curr) not in space_time_reservation:
-                            space_time_reservation[(conn_name, t_curr)] = 1
-                        else:
-                            space_time_reservation[(conn_name, t_curr)] += 1
 
                 for t in range(t_curr, t_next):
                     if (t_next - t_curr) == 2 and t == t_curr:

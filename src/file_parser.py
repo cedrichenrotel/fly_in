@@ -6,7 +6,7 @@
 #  By: cehenrot <cehenrot@student.42.fr>         +#+  +:+       +#+         #
 #                                              +#+#+#+#+#+   +#+            #
 #  Created: 2026/04/27 15:02:34 by cehenrot        #+#    #+#               #
-#  Updated: 2026/06/01 12:57:48 by cehenrot        ###   ########.fr        #
+#  Updated: 2026/06/01 15:14:57 by cehenrot        ###   ########.fr        #
 #                                                                           #
 # ************************************************************************* #
 
@@ -111,14 +111,16 @@ class FileParser():
                 key, val = meta.split('=')
                 if key == 'color':
                     dict_meta['color'] = val
-                if key == 'zone':
+                elif key == 'zone':
                     dict_meta['zone_type'] = ZoneType[val]
-                if key == 'max_drones':
+                elif key == 'max_drones':
                     max_drones = int(val)
                     if max_drones <= 0:
                         raise ValueError("Value of 'max_drone' is "
                                          "not positive")
                     dict_meta['max_drones'] = max_drones
+                else:
+                    raise ParseError(f"Ligne {line_num}: metadata unknown")
             return dict_meta
         except KeyError:
             raise KeyError(f"line {line_num}: invalid zone type: {val}")
@@ -216,11 +218,11 @@ class FileParser():
 
                     if (zone_a not in graph.dict_zones or
                        zone_b not in graph.dict_zones):
-                        raise KeyError(f"line {line_num}: "
+                        raise KeyError(f"Line {line_num}: "
                                        "Connection coordinate unknown")
 
                     if frozenset((zone_a, zone_b)) in set_zones:
-                        raise ParseError(f"line {line_num}: Parser-file-> "
+                        raise ParseError(f"Line {line_num}: Parser-file-> "
                                          "The same connection appears more "
                                          "than once"
                                          )
@@ -234,19 +236,20 @@ class FileParser():
                     if len(info) > 2:
                         try:
                             key, value = info[2].split("=")
-                            if (
-                                key == 'max_link_capacity' or
-                                key == 'max_drones_capacity'
-                            ):
-
+                            if key == 'max_link_capacity':
                                 max_link_capacity = int(value)
+                            else:
+                                raise ParseError(f"Line {line_num}: "
+                                                 "incorrectly written maxlink "
+                                                 "capacity")
                         except ValueError as e:
-                            raise ValueError(f"line {line_num}: "
+                            raise ValueError(f"Line {line_num}: "
                                              "Max_link_capacity"
                                              f" is not value, value: {e}"
                                              )
+
                         if max_link_capacity <= 0:
-                            raise ValueError(f"line {line_num}: "
+                            raise ValueError(f"Line {line_num}: "
                                              "Max_link_capacity <= 0, "
                                              "value: "
                                              f"{max_link_capacity}"
