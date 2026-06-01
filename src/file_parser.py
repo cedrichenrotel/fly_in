@@ -6,7 +6,7 @@
 #  By: cehenrot <cehenrot@student.42.fr>         +#+  +:+       +#+         #
 #                                              +#+#+#+#+#+   +#+            #
 #  Created: 2026/04/27 15:02:34 by cehenrot        #+#    #+#               #
-#  Updated: 2026/05/27 17:41:58 by cehenrot        ###   ########.fr        #
+#  Updated: 2026/06/01 09:54:58 by cehenrot        ###   ########.fr        #
 #                                                                           #
 # ************************************************************************* #
 
@@ -27,10 +27,24 @@ class FileParser():
     def __init__(self) -> None:
         pass
 
-    def extraction_info(self, line: str) -> list:
+    def extraction_info(self, line: str, line_num) -> list:
 
         """split a line in the file to extract the information more
             effectively"""
+        brackets_open = '[' in line
+        brackets_close = ']' in line
+
+        if brackets_open or brackets_close:
+            if not brackets_open:
+                raise ParseError(f"Line {line_num}: missing brackets open '['")
+            if not brackets_close:
+                raise ParseError(f"Line {line_num}: missing brackets "
+                                 "close ']'")
+            if line.index('[') > line.index(']'):
+                raise ParseError(f"Line {line_num}:  ']' before '['")
+            if brackets_open > 1 or brackets_close > 1:
+                raise ParseError(f"Line {line_num}: multiple brackets")
+
         info = line.replace('[', '').replace(']', '').split()
         if info[0] == 'connection:':
             if len(info) < 2:
@@ -43,7 +57,7 @@ class FileParser():
         return info
 
     def parse_zone(self, line: str, line_num: int) -> Zone:
-        info = self.extraction_info(line)
+        info = self.extraction_info(line, line_num)
         name_zone = self.check_name_zone(info[1], line_num)
         x = self.check_coordinate(info[2], line_num)
         y = self.check_coordinate(info[3], line_num)
@@ -147,8 +161,8 @@ class FileParser():
                     graph.add_zone(zone)
 
                 elif line.startswith('connection:'):
-                    info = self.extraction_info(line)
-                    zone_a, zone_b = info[1].split('-')
+                    info = self.extraction_info(line, line_num)
+                    zone_a, zone_b = info[1].split('-', maxsplit=1)
                     if (zone_a not in graph.dict_zones or
                        zone_b not in graph.dict_zones):
                         raise KeyError(f"line {line_num}: "
