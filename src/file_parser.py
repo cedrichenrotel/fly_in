@@ -6,7 +6,7 @@
 #  By: cehenrot <cehenrot@student.42.fr>         +#+  +:+       +#+         #
 #                                              +#+#+#+#+#+   +#+            #
 #  Created: 2026/04/27 15:02:34 by cehenrot        #+#    #+#               #
-#  Updated: 2026/06/01 12:38:22 by cehenrot        ###   ########.fr        #
+#  Updated: 2026/06/01 12:57:48 by cehenrot        ###   ########.fr        #
 #                                                                           #
 # ************************************************************************* #
 
@@ -144,6 +144,8 @@ class FileParser():
         with open(file) as f:
             empty: bool = True
             dup_nb_drone: bool = False
+            start = False
+            end = False
 
             for line_num, line in enumerate(f, start=1):
                 empty = False
@@ -176,20 +178,30 @@ class FileParser():
                     graph.nb_drone = nb_drone
 
                 elif line.startswith('start_hub:'):
-                    zone = self.parse_zone(line, line_num)
+                    if not start:
+                        zone = self.parse_zone(line, line_num)
 
-                    self.check_doublon_zone(zone, set_name_zone, line_num)
+                        self.check_doublon_zone(zone, set_name_zone, line_num)
 
-                    graph.add_zone(zone)
-                    graph.set_start_zone(zone)
+                        graph.add_zone(zone)
+                        graph.set_start_zone(zone)
+                        start = True
+                    else:
+                        raise ParseError(f"line {line_num}: "
+                                         "Duplicate start_hub")
 
                 elif line.startswith('end_hub:'):
-                    zone = self.parse_zone(line, line_num)
+                    if not end:
+                        zone = self.parse_zone(line, line_num)
 
-                    self.check_doublon_zone(zone, set_name_zone, line_num)
+                        self.check_doublon_zone(zone, set_name_zone, line_num)
 
-                    graph.add_zone(zone)
-                    graph.set_end_zone(zone)
+                        graph.add_zone(zone)
+                        graph.set_end_zone(zone)
+                        end = True
+                    else:
+                        raise ParseError(f"line {line_num}: "
+                                         "Duplicate end_hub")
 
                 elif line.startswith('hub:'):
                     zone = self.parse_zone(line, line_num)
